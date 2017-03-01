@@ -25,19 +25,10 @@
 (defun peek (&optional (offset 0))
   (char *string-stream* (+ *string-index* offset)))
 
-(defmacro with-string-stream (string &body body)
+(defmacro with-string-input (string &body body)
   `(let ((*string-stream* ,string)
          (*string-index* 0))
      ,@body))
-
-(defmacro with-backtrack-on-error (() &body body)
-  (let ((position (gensym "POSITION")) (failure (gensym "FAILURE")))
-    `(let ((,position *string-index*)
-           (,failure T))
-       (unwind-protect (prog1 (progn ,@body)
-                         (setf ,failure NIL))
-         (when ,failure
-           (setf *string-index* ,position))))))
 
 (defvar *rules* (make-hash-table :test 'eql))
 
@@ -53,20 +44,22 @@
 
 (defun consume-string (string)
   (let ((start *string-index*))
-    (loop for char = (consume)
-          for comp across string
-          do (unless (char= comp char)
+    (loop for comp across string
+          do (when (or (end-of-stream-p)
+                       (char/= comp (consume)))
                (setf *string-index* start)
                (return NIL))
           finally (return string))))
 
 (defun consume-any (choices)
-  (when (find (peek) choices)
-    (consume)))
+  (unless (end-of-stream-p)
+    (when (find (peek) choices)
+      (consume))))
 
 (defun consume-notany (choices)
-  (unless (find (peek) choices)
-    (consume)))
+  (unless (end-of-stream-p)
+    (unless (find (peek) choices)
+      (consume))))
 
 (defun compile-rule (rule)
   (etypecase rule
@@ -90,8 +83,10 @@
        (when `(when ,(compile-rule (second rule))
                 ,@(mapcar #'compile-rule (cddr rule))))
        (v `(v ,(compile-rule (second rule))))
-       (* `(loop while ,(compile-rule (second rule))))
-       (? `(or ,(compile-rule (second rule)) ,(third rule)))
+       (* `(loop until (end-of-stream-p)
+                 while ,(compile-rule (second rule))
+                 finally (return T)))
+       (? `(or ,(compile-rule (second rule)) ,(or (third rule) T)))
        (T rule)))))
 
 (defmacro define-rule (name rule &body transform)
@@ -101,22 +96,26 @@
              (let ((v))
                (flet ((v (value)
                         (when value (setf v value))))
-                 ,(compile-rule rule))
-               ,(if transform
-                    `(progn ,@transform)
-                    'v))))
+                 (when ,(compile-rule rule)
+                   ,(if transform
+                        `(progn ,@transform)
+                        'v))))))
      ',name))
 
 (defmacro define-struct (name rule &body transform)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf (rule ',name)
            (lambda ()
-             (let ((v (list ',name)))
+             (let ((v))
                (flet ((v (value)
                         (when value (push value v) value)))
-                 ,(compile-rule rule))
-               (setf v (nreverse v))
-               ,(if transform
-                    `(progn ,@transform)
-                    'v))))
+                 (when ,(compile-rule rule)
+                   (setf v (nreverse v))
+                   ,(if transform
+                        `(progn ,@transform)
+                        `(list* ',name v)))))))
      ',name))
+
+(defun parse (input &optional toplevel-rule)
+  (with-string-input input
+    (funcall (rule toplevel-rule))))

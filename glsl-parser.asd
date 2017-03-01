@@ -5,7 +5,7 @@
 |#
 
 (in-package #:cl-user)
-(asdf:defsystem for
+(asdf:defsystem glsl-parser
   :version "1.0.0"
   :license "Artistic"
   :author "Nicolas Hafner <shinmera@tymoon.eu>"
@@ -15,6 +15,7 @@
   :serial T
   :components ((:file "package")
                (:file "parser")
+               (:file "grammar")
                (:file "documentation"))
   :depends-on (:documentation-utils
                :parse-float))

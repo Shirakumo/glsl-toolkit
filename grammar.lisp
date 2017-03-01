@@ -1,74 +1,125 @@
 (in-package #:glsl-parser)
 
-(define-struct shader
-    (* (v (or preprocessor
-              variable-definition
-              function-definition
-              struct-definition
-              ";"))))
+;; (define-struct shader
+;;     (* (v (or preprocessor
+;;               variable-definition
+;;               function-definition
+;;               struct-definition
+;;               ";"))))
 
-(define-struct preprocessor
-    (and "#" (* (v (notany (#\Newline))))))
+;; (define-struct preprocessor
+;;     (and "#" (* (v (notany (#\Newline))))))
 
-(define-struct variable-definition
-    (and (v type)
-         (v variable-declaration)
-         (* (and "," (v variable-declaration)))
-         ";"))
+;; (define-struct variable-definition
+;;     (and (v type)
+;;          (v variable-declaration)
+;;          (* (and "," (v variable-declaration)))
+;;          ";"))
 
-(define-struct variable-declaration
-    (and (v identifier)
-         (when "="
-           (v value))))
+;; (define-struct variable-declaration
+;;     (and (v identifier)
+;;          (when "="
+;;            (v value))))
 
-(define-struct function-definition
-    (and (v basic-type)
-         (v identifier)
-         (v definition-arglist)
-         (or ";"
-             (v block))))
+;; (define-struct function-definition
+;;     (and (v basic-type)
+;;          (v identifier)
+;;          (v definition-arglist)
+;;          (or ";"
+;;              (v block))))
 
-(define-struct definition-arglist
-    (and "(" (? (v definition-argument)) (* (and "," (v definition-argument))) ")"))
+;; (define-struct definition-arglist
+;;     (and "(" (? (v definition-argument)) (* (and "," (v definition-argument))) ")"))
 
-(define-struct definition-argument
-    (and (v basic-type) (v identifier)))
+;; (define-struct definition-argument
+;;     (and (v basic-type) (v identifier)))
 
-(define-struct block
-    (and "{" (* (v expression)) "}"))
+;; (define-struct block
+;;     (and "{" (* (v expression)) "}"))
 
-(define-struct struct-definition
-    (and (? (v qualifiers)) "struct" (v identifier) "{"
-         (* (v struct-field))
-         "};"))
+;; (define-struct struct-definition
+;;     (and (? (v qualifiers)) "struct" (v identifier) "{"
+;;          (* (v struct-field))
+;;          "};"))
 
-(define-struct struct-field
-    (and (v basic-type) (v identifier) ";"))
+;; (define-struct struct-field
+;;     (and (v basic-type) (v identifier) ";"))
 
-(define-rule value
-    (v (or block-value
-           math-value
-           ternary
-           call
-           float-constant
-           integer-constant
-           variable)))
+;; (define-rule value
+;;     (v (or block-value
+;;            math-value
+;;            ternary
+;;            call
+;;            float-constant
+;;            integer-constant
+;;            variable)))
 
-(define-rule block-value
-    (and "(" (v value) ")"))
+;; (define-rule block-value
+;;     (and "(" (v value) ")"))
 
-;; FIXME: proper binding order
-(define-struct math-value
-    (and (v value) (v (or "+" "-" "*" "/" "^" "%" "|" "&" "||" "&&")) (v value)))
+;; ;; FIXME: proper binding order
+;; (define-struct math-value
+;;     (and (v value) (v (or "+" "-" "*" "/" "^" "%" "|" "&" "||" "&&")) (v value)))
 
-(define-struct ternary
-    (and (v value) "?" (v value) ":" (v value)))
+;; (define-struct ternary
+;;     (and (v value) "?" (v value) ":" (v value)))
+
+;; (define-rule expression
+;;     (or ";"
+;;         (v (or variable-definition
+;;                (and value ";")
+;;                block
+;;                if
+;;                switch
+;;                loop
+;;                return
+;;                "break;"
+;;                "continue;"))))
+
+;; (define-struct if
+;;     (and "if" (v value)
+;;          (v (or block expression))
+;;          (when "else"
+;;            (v (or block expression)))))
+
+;; (define-struct switch
+;;     (and "switch" (v value)
+;;          (* (and (or (and "case" (v integer))
+;;                      "default") ":"
+;;                  (* (v expression)) (? (v "break"))))))
+
+;; (define-rule loop
+;;     (v (or for while do)))
+
+;; (define-struct for
+;;     (and "for" "(" (v variable-definition) ";" (v value) ";" (v value) ")"
+;;          (v (or block expression))))
+
+;; (define-struct while
+;;     (and "while" (v value) (v (or block expression))))
+
+;; (define-struct do
+;;     (and "do" (v (or block expression))
+;;          (when "while" (v expression))))
+
+;; (define-struct return
+;;     (and "return" (v value) ";"))
+
+;; (define-struct variable
+;;     (and (v identifier)
+;;          (when "[" (v value) "]")))
+
+;; (define-struct function-call
+;;     (and (v identifier) (v call-arglist)))
+
+;; (define-struct call-arglist
+;;     (and "(" (? (v identifier)) (* (and "," (v identifier))) ")"))
 
 (define-struct integer-constant
     (and (v (or decimal-constant
                 hexadecimal-constant
                 octal-constant))
-         (v (? (any "uU")))))
+         (? (v (any "uU")))))
 
 (define-struct decimal-constant
     (or (and (v (any "123456789")) (* (v (any "0123456789")))))
@@ -79,67 +130,16 @@
   (parse-integer (map 'string #'identity v) :radix 8))
 
 (define-struct hexadecimal-constant
-    (and "0x" (* (v (any 0123456789abcdefABCDEF))))
+    (and "0x" (* (v (any "0123456789abcdefABCDEF"))))
   (parse-integer (map 'string #'identity v) :radix 16))
 
 (define-struct float-constant
-    (and (* (v (any "0123456789"))) "." (* (v (any "0123456789")))
-         (when (any "eE") (v (any "+-")) (* (v (any "0123456789"))))
+    (and (* (v (any "0123456789"))) (v #\.) (* (v (any "0123456789")))
+         (? (when (any "eE") (v (any "+-")) (* (v (any "0123456789")))))
          (v (? (or "f" "F" "lf" "LF") "f")))
   (let ((type (if (string-equal "f" (car (last v)))
                   'single-float 'double-float)))
-    (parse-float (map 'string (lambda (s) (char s 0)) (butlast v)) :type type)))
-
-(define-rule expression
-    (or ";"
-        (v (or variable-definition
-               (and value ";")
-               block
-               if
-               switch
-               loop
-               return
-               "break;"
-               "continue;"))))
-
-(define-struct if
-    (and "if" (v value)
-         (v (or block expression))
-         (when "else"
-           (v (or block expression)))))
-
-(define-struct switch
-    (and "switch" (v value)
-         (* (and (or (and "case" (v integer))
-                     "default") ":"
-                 (* (v expression)) (? (v "break"))))))
-
-(define-rule loop
-    (v (or for while do)))
-
-(define-struct for
-    (and "for" "(" (v variable-definition) ";" (v value) ";" (v value) ")"
-         (v (or block expression))))
-
-(define-struct while
-    (and "while" (v value) (v (or block expression))))
-
-(define-struct do
-    (and "do" (v (or block expression))
-         (when "while" (v expression))))
-
-(define-struct return
-    (and "return" (v value) ";"))
-
-(define-struct variable
-    (and (v identifier)
-         (when "[" (v value) "]")))
-
-(define-struct function-call
-    (and (v identifier) (v call-arglist)))
-
-(define-struct call-arglist
-    (and "(" (? (v identifier)) (* (and "," (v identifier))) ")"))
+    (parse-float:parse-float (map 'string #'identity (butlast v)) :type type)))
 
 (define-struct identifier
     (* (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")))
