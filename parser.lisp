@@ -91,17 +91,15 @@
        (? `(or ,(compile-rule (second rule)) ,(or (third rule) T)))
        (T rule)))))
 
-(defmacro define-rule (name rule &body transform)
+(defmacro define-rule (name &body rules)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf (rule ',name)
            (lambda ()
              (let ((v))
                (flet ((v (value)
                         (when value (setf v value))))
-                 (when ,(compile-rule rule)
-                   ,(if transform
-                        `(progn ,@transform)
-                        'v))))))
+                 (or v
+                     ,(compile-rule `(or ,@rules)))))))
      ',name))
 
 (defmacro define-struct (name rule &body transform)
