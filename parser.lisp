@@ -76,7 +76,9 @@
      `(consume-string ,rule))
     (cons
      (case (first rule)
-       (and `(and ,@(mapcar #'compile-rule (rest rule))))
+       (and `(let ((index *string-index*))
+               (or (and ,@(mapcar #'compile-rule (rest rule)))
+                   (null (setf *string-index* index)))))
        (or `(or ,@(mapcar #'compile-rule (rest rule))))
        (notany `(consume-notany ',(second rule)))
        (any `(consume-any ',(second rule)))
