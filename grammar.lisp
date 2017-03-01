@@ -1,119 +1,7 @@
 (in-package #:glsl-parser)
 
-;; (define-struct shader
-;;     (* (v (or preprocessor
-;;               variable-definition
-;;               function-definition
-;;               struct-definition
-;;               ";"))))
-
-;; (define-struct preprocessor
-;;     (and "#" (* (v (notany (#\Newline))))))
-
-;; (define-struct variable-definition
-;;     (and (v type)
-;;          (v variable-declaration)
-;;          (* (and "," (v variable-declaration)))
-;;          ";"))
-
-;; (define-struct variable-declaration
-;;     (and (v identifier)
-;;          (when "="
-;;            (v value))))
-
-;; (define-struct function-definition
-;;     (and (v basic-type)
-;;          (v identifier)
-;;          (v definition-arglist)
-;;          (or ";"
-;;              (v block))))
-
-;; (define-struct definition-arglist
-;;     (and "(" (? (v definition-argument)) (* (and "," (v definition-argument))) ")"))
-
-;; (define-struct definition-argument
-;;     (and (v basic-type) (v identifier)))
-
-;; (define-struct block
-;;     (and "{" (* (v expression)) "}"))
-
-;; (define-struct struct-definition
-;;     (and (? (v qualifiers)) "struct" (v identifier) "{"
-;;          (* (v struct-field))
-;;          "};"))
-
-;; (define-struct struct-field
-;;     (and (v basic-type) (v identifier) ";"))
-
-;; (define-rule value
-;;     (v (or block-value
-;;            math-value
-;;            ternary
-;;            call
-;;            float-constant
-;;            integer-constant
-;;            variable)))
-
-;; (define-rule block-value
-;;     (and "(" (v value) ")"))
-
-;; ;; FIXME: proper binding order
-;; (define-struct math-value
-;;     (and (v value) (v (or "+" "-" "*" "/" "^" "%" "|" "&" "||" "&&")) (v value)))
-
-;; (define-struct ternary
-;;     (and (v value) "?" (v value) ":" (v value)))
-
-;; (define-rule expression
-;;     (or ";"
-;;         (v (or variable-definition
-;;                (and value ";")
-;;                block
-;;                if
-;;                switch
-;;                loop
-;;                return
-;;                "break;"
-;;                "continue;"))))
-
-;; (define-struct if
-;;     (and "if" (v value)
-;;          (v (or block expression))
-;;          (when "else"
-;;            (v (or block expression)))))
-
-;; (define-struct switch
-;;     (and "switch" (v value)
-;;          (* (and (or (and "case" (v integer))
-;;                      "default") ":"
-;;                  (* (v expression)) (? (v "break"))))))
-
-;; (define-rule loop
-;;     (v (or for while do)))
-
-;; (define-struct for
-;;     (and "for" "(" (v variable-definition) ";" (v value) ";" (v value) ")"
-;;          (v (or block expression))))
-
-;; (define-struct while
-;;     (and "while" (v value) (v (or block expression))))
-
-;; (define-struct do
-;;     (and "do" (v (or block expression))
-;;          (when "while" (v expression))))
-
-;; (define-struct return
-;;     (and "return" (v value) ";"))
-
-;; (define-struct variable
-;;     (and (v identifier)
-;;          (when "[" (v value) "]")))
-
-;; (define-struct function-call
-;;     (and (v identifier) (v call-arglist)))
-
-;; (define-struct call-arglist
-;;     (and "(" (? (v identifier)) (* (and "," (v identifier))) ")"))
+(define-struct boolean-constant
+    (v (or "true" "false")))
 
 (define-struct integer-constant
     (and (v (or decimal-constant
@@ -145,61 +33,290 @@
     (* (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")))
   (map 'string #'identity v))
 
+(define-struct variable-identifier
+    (v identifier))
+
+(define-rule primary-expression
+    (or (v variable-identifier)
+        (v integer-constant)
+        (v float-constant)
+        (v boolean-constant)
+        (and "(" (v expression) ")")))
+
+(define-struct field-reference
+    (and (v postfix-expression) "." (v identifier)))
+
+(define-struct array-reference
+    (and (v postfix-expression) "[" (v expression) "]"))
+
+(define-rule postfix-expression
+  primary-expression
+  array-reference
+  function-call
+  field-reference
+  postfix-increment
+  postfix-decrement)
+
+(define-struct postfix-increment
+    (and (v postfix-expression) "++"))
+
+(define-struct postfix-decrement
+    (and (v postfix-expression) "--"))
+
+(define-rule function-identifier
+  type-specifier
+  postfix-expression)
+
+(define-struct function-call
+    (and (v function-identifier) "(" (v function-call-arglist) ")"))
+
+(define-struct function-call-arglist
+    (? (or (v "void")
+           (and (v assignment-expression)
+                (* "," (v assignment-expression))))))
+
+(define-struct same-+
+    (and "+" (v unary-expression)))
+
+(define-struct negation
+    (and "-" (v unary-expression)))
+
+(define-struct inversion
+    (and "!" (v unary-expression)))
+
+(define-struct bit-inversion
+    (and "~" (v unary-expression)))
+
+(define-struct prefix-increment
+    (and "++" (v prefix-expression)))
+
+(define-struct prefix-decrement
+    (and "--" (v prefix-expression)))
+
+(define-rule unary-op-expression
+  same-+
+  negation
+  inversion
+  bit-inversion)
+
+(define-rule unary-expression
+  postfix-expression
+  prefix-increment
+  prefix-decrement
+  unary-op-expression)
+
+(define-rule multiplicative-expression
+  unary-expression
+  multiplication
+  division
+  modulus)
+
+(define-struct multiplication
+    (and (v multiplicative-expression) "*" (v unary-expression)))
+
+(define-struct division
+    (and (v multiplicative-expression) "/" (v unary-expression)))
+
+(define-struct modulus
+    (and (v multiplicative-expression) "%" (v unary-expression)))
+
+(define-rule additive-expression
+  multiplicative-expression
+  addition
+  subtraction)
+
+(define-struct addition
+    (and (v additive-expression) "+" (v multiplicative-expression)))
+
+(define-struct subtraction
+    (and (v additive-expression) "-" (v multiplicative-expression)))
+
+(define-rule shift-expression
+  additive-expression
+  left-shift
+  right-shift)
+
+(define-struct left-shift
+    (and (v shift-expression) "<<" (v additive-expression)))
+
+(define-struct right-shift
+    (and (v shift-expression) ">>" (v additive-expression)))
+
+(define-rule relational-expression
+  shift-expression
+  less-than
+  greater-than
+  less-equal-than
+  greater-equal-than)
+
+(define-struct less-than
+    (and (v relational-expression) "<" (v shift-expression)))
+
+(define-struct greater-than
+    (and (v relational-expression) ">" (v shift-expression)))
+
+(define-struct less-equal-than
+    (and (v relational-expression) "<=" (v shift-expression)))
+
+(define-struct greater-equal-than
+    (and (v relational-expression) ">=" (v shift-expression)))
+
+(define-rule equality-expression
+  relational-expression
+  equal
+  not-equal)
+
+(define-struct equal
+    (and (v equality-expression) "==" (v relational-expression)))
+
+(define-struct not-equal
+    (and (v equality-expression) "!=" (v relational-expression)))
+
+(define-rule and-expression
+  equality-expression
+  bitwise-and)
+
+(define-struct bitwise-and
+    (and (v and-expression) "&" (v equality-expression)))
+
+(define-rule exclusive-or-expression
+  and-expression
+  exclusive-or)
+
+(define-struct exclusive-or
+    (and (v exclusive-or-expression) "^" (v and-expression)))
+
+(define-rule inclusive-or-expression
+  exclusive-or-expression
+  inclusive-or)
+
+(define-struct inclusive-or
+    (and (v inclusive-or-expression) "|" (v exclusive-or-expression)))
+
+(define-rule logical-and-expression
+  inclusive-or-expression
+  logical-and)
+
+(define-struct logical-and
+    (and (v logical-and-expression) "&&" (v inclusive-or-expression)))
+
+(define-rule logical-xor-expression
+  logical-and-expression
+  logical-xor)
+
+(define-struct logical-xor
+    (and (v logical-xor-expression) "^^" (v logical-and-expression)))
+
+(define-rule logical-or-expression
+  logical-xor-expression
+  logical-or)
+
+(define-struct logical-or
+    (and (v logical-or-expression) "||" (v logical-xor-expression)))
+
+(define-rule conditional-expression
+  logical-or-expression
+  conditional)
+
+(define-struct conditional
+    (and (v logical-or-expression) "?" (v expression) ":" (v assignment-expression)))
+
+(define-rule assignment-expression
+  conditional-expression
+  assignment)
+
+(define-struct assignment
+    (and (v unary-expression) (v (or "=" "*=" "/=" "%=" "+=" "-=" "<=" ">=" "&=" "^=" "|=")) (v assignment-expression)))
+
+(define-struct expression
+    (and (v assignment-expression (* (and "," (v assignment-expression))))))
+
+(define-rule constant-expression
+  conditional-expression)
+
+(define-rule declaration
+  (and (v (or function-prototype
+              init-declarator-list
+              precision-declarator
+              struct-declaration
+              variable-declaration))
+       ";"))
+
+(define-struct function-prototype
+    (and (v fully-specified-type) (v identifier) (v function-prototype-parameters)))
+
+(define-struct function-prototype-parameters
+    (and "(" (* (v parameter-declaration)) ")")
+  v)
+
+(define-struct parameter-declaration
+    (and (v (? type-qualifier)) (v type-specifier)
+         (v (? identifier)) (? (v array-specifier))))
+
+(define-struct precision-declarator
+    (and "precision" (v (or "highp" "mediump" "lowp")) (v type-specifier)))
+
+;; Page 195
+
+(define-struct init-declarator-list
+    )
+
+
 (define-rule basic-type
-    (v (or ;; Transparent Types
-           "void" "bool" "int" "uint" "float" "double"
-           "vec2" "vec3" "vec4"
-           "dvec2" "dvec3" "dvec4" "bvec2" "bvec3" "bvec4"
-           "ivec2" "ivec3" "ivec4" "uvec2" "uvec3" "uvec4"
-           "mat2" "mat3" "mat4"
-           "mat2x2" "mat2x3" "mat2x4"
-           "mat3x2" "mat3x3" "mat3x4"
-           "mat4x2" "mat4x3" "mat4x4"
-           "dmat2" "dmat3" "dmat4"
-           "dmat2x2" "dmat2x3" "dmat2x4"
-           "dmat3x2" "dmat3x3" "dmat3x4"
-           "dmat4x2" "dmat4x3" "dmat4x4"
-           ;; Floating-Point Opaque Types
-           "sampler1D" "image1D"
-           "sampler2D" "image2D"
-           "sampler3D" "image3D"
-           "samplerCube" "imageCube"
-           "sampler2DRect" "image2DRect"
-           "sampler1DArray" "image1DArray"
-           "sampler2DArray" "image2DArray"
-           "samplerBuffer" "imageBuffer"
-           "sampler2DMS" "image2DMS"
-           "sampler2DMSArray" "image2DMSArray"
-           "samplerCubeArray" "imageCubeArray"
-           "sampler1DShadow"
-           "sampler2DShadow"
-           "smapler2DRectShadow"
-           "sampler1DArrayShadow"
-           "sampler2DArrayShadow"
-           "samplerCubeShadow"
-           "samplerCubeArrayShadow"
-           ;; Signed Integer Opaque Types
-           "isampler1D" "iimage1D"
-           "isampler2D" "iimage2D"
-           "isampler3D" "iimage3D"
-           "isamplerCube" "iimageCube"
-           "isampler2DRect" "iimage2DRect"
-           "isampler1DArray" "iimage1DArray"
-           "isampler2DArray" "iimage2DArray"
-           "isamplerBuffer" "iimageBuffer"
-           "isampler2DMS" "iimage2DMS"
-           "isampler2DMSArray" "iimage2DMSArray"
-           "isamplerCubeArray" "iimageCubeArray"
-           ;; Unsigned Integer Opaque Types
-           "atomic_uint"
-           "usampler1D" "uimage1D"
-           "usampler2D" "uimage2D"
-           "usampler3D" "uimage3D"
-           "usamplerCube" "uimageCube"
-           "usampler2DRect" "uimage2DRect"
-           "usampler1DArray" "uimage1DArray"
-           "usampler2DArray" "uimage2DArray"
-           "usamplerBuffer" "uimageBuffer"
-           "usampler2DMS" "uimage2DMS"
-           "usampler2DMSArray" "uimage2DMSArray"
-           "usamplerCubeArray" "uimageCubeArray")))
+  ;; Transparent Types
+  "void" "bool" "int" "uint" "float" "double"
+  "vec2" "vec3" "vec4"
+  "dvec2" "dvec3" "dvec4" "bvec2" "bvec3" "bvec4"
+  "ivec2" "ivec3" "ivec4" "uvec2" "uvec3" "uvec4"
+  "mat2" "mat3" "mat4"
+  "mat2x2" "mat2x3" "mat2x4"
+  "mat3x2" "mat3x3" "mat3x4"
+  "mat4x2" "mat4x3" "mat4x4"
+  "dmat2" "dmat3" "dmat4"
+  "dmat2x2" "dmat2x3" "dmat2x4"
+  "dmat3x2" "dmat3x3" "dmat3x4"
+  "dmat4x2" "dmat4x3" "dmat4x4"
+  ;; Floating-Point Opaque Types
+  "sampler1D" "image1D"
+  "sampler2D" "image2D"
+  "sampler3D" "image3D"
+  "samplerCube" "imageCube"
+  "sampler2DRect" "image2DRect"
+  "sampler1DArray" "image1DArray"
+  "sampler2DArray" "image2DArray"
+  "samplerBuffer" "imageBuffer"
+  "sampler2DMS" "image2DMS"
+  "sampler2DMSArray" "image2DMSArray"
+  "samplerCubeArray" "imageCubeArray"
+  "sampler1DShadow"
+  "sampler2DShadow"
+  "smapler2DRectShadow"
+  "sampler1DArrayShadow"
+  "sampler2DArrayShadow"
+  "samplerCubeShadow"
+  "samplerCubeArrayShadow"
+  ;; Signed Integer Opaque Types
+  "isampler1D" "iimage1D"
+  "isampler2D" "iimage2D"
+  "isampler3D" "iimage3D"
+  "isamplerCube" "iimageCube"
+  "isampler2DRect" "iimage2DRect"
+  "isampler1DArray" "iimage1DArray"
+  "isampler2DArray" "iimage2DArray"
+  "isamplerBuffer" "iimageBuffer"
+  "isampler2DMS" "iimage2DMS"
+  "isampler2DMSArray" "iimage2DMSArray"
+  "isamplerCubeArray" "iimageCubeArray"
+  ;; Unsigned Integer Opaque Types
+  "atomic_uint"
+  "usampler1D" "uimage1D"
+  "usampler2D" "uimage2D"
+  "usampler3D" "uimage3D"
+  "usamplerCube" "uimageCube"
+  "usampler2DRect" "uimage2DRect"
+  "usampler1DArray" "uimage1DArray"
+  "usampler2DArray" "uimage2DArray"
+  "usamplerBuffer" "uimageBuffer"
+  "usampler2DMS" "uimage2DMS"
+  "usampler2DMSArray" "uimage2DMSArray"
+  "usamplerCubeArray" "uimageCubeArray")
