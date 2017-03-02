@@ -88,10 +88,10 @@
     (and "~" (v unary-expression)))
 
 (define-struct prefix-increment
-    (and "++" (v prefix-expression)))
+    (and "++" (v unary-expression)))
 
 (define-struct prefix-decrement
-    (and "--" (v prefix-expression)))
+    (and "--" (v unary-expression)))
 
 (define-rule unary-op-expression
   same-+
@@ -242,6 +242,9 @@
               variable-declaration))
        ";"))
 
+(define-struct variable-declaration
+    (and (v type-qualifier) (v identifier) (* (and "," (v identifier)))))
+
 (define-struct function-prototype
     (and (v fully-specified-type) (v identifier) (v function-prototype-parameters)))
 
@@ -256,11 +259,65 @@
 (define-struct precision-declarator
     (and "precision" (v (or "highp" "mediump" "lowp")) (v type-specifier)))
 
-;; Page 195
-
 (define-struct init-declarator-list
-    )
+    (and (v fully-specified-type) (v single-declaration)
+         (* (and "," (v single-declaration)))))
 
+(define-struct single-declaration
+    (and (v identifier) (v (? array-specifier)) (? (and "=" (v initializer)))))
+
+(define-struct fully-specified-type
+    (and (v (? type-qualifier)) (v type-specifier)))
+
+(define-struct invariant-qualifier
+    "invariant")
+
+(define-struct interpolation-qualifier
+    (v (or "smooth" "flat" "noperspective")))
+
+(define-struct layout-qualifier
+    (and "layout" "(" (v layout-qualifier-id) (* (and "," (v layout-qualifier-id))) ")"))
+
+(define-struct layout-qualifier-id
+    (or (v "shared")
+        (and (v identifier) (? (and "=" (v constant-expression))))))
+
+(define-struct precise-qualifier
+    "precise")
+
+(define-struct type-qualifier
+    (+ (v (or storage-qualifier
+              subroutine-qualifier
+              layout-qualifier
+              precision-qualifier
+              interpolation-qualifier
+              invariant-qualifier
+              precise-qualifier))))
+
+(define-struct storage-qualifier
+    (v (or "const" "inout" "in" "out" "centroid" "patch" "sample"
+           "uniform" "buffer" "shared" "coherent" "volatile"
+           "restrict" "readonly" "writeonly")))
+
+(define-struct subroutine-qualifier
+    (and "subroutine" (? (and "(" (v type-name) ")"))))
+
+(define-struct precision-qualifier
+    (v (or "highp" "mediump" "lowp")))
+
+(define-struct type-specifier
+    (and (v type-specifier-nonarray) (? (v array-specifier))))
+
+(define-struct array-specifier
+    (+ (and "[" (? (v constant-expression)) "]")))
+
+(define-rule type-specifier-nonarray
+    basic-type
+  struct-specifier
+  type-name)
+
+(define-struct type-name
+    (v identifier))
 
 (define-rule basic-type
   ;; Transparent Types
@@ -320,3 +377,100 @@
   "usampler2DMS" "uimage2DMS"
   "usampler2DMSArray" "uimage2DMSArray"
   "usamplerCubeArray" "uimageCubeArray")
+
+(define-struct struct-specifier
+    (and "struct" (v (? identifier)) "{" (+ (v struct-declaration)) "}"))
+
+(define-struct struct-declaration
+    (and (v (? type-qualifier)) (v type-specifier)
+         (v struct-declarator) (* (and "," (v struct-declarator))) ";"))
+
+(define-struct struct-declarator
+    (and (v identifier) (? (v array-specifier))))
+
+(define-struct initializer
+    (or (v assignment-expression)
+        (and "{" (v initializer) (* (and "," (v initializer))) (? ",") "}")))
+
+(define-rule statement
+  compound-statement
+  simple-statement)
+
+(define-rule simple-statement
+  declaration
+  expression-statement
+  selection-statement
+  switch-statement
+  case-label
+  iteration-statement
+  jump-statement)
+
+(define-struct compound-statement
+    (and "{" (* (v statement)) "}"))
+
+(define-rule expression-statement
+    (and (? (v expression)) ";"))
+
+(define-struct selection-statement
+    (and "if" "(" (v expression) ")" (v statement) (? (and "else" (v statement)))))
+
+(define-rule condition
+    expression
+  condition-declarator)
+
+(define-struct condition-declarator
+    (and (v fully-specified-type) (v identifier) "=" (v initializer)))
+
+(define-struct switch-statement
+    (and "switch" "(" (v expression) ")"
+         "{" (* (v statement)) "}"))
+
+(define-struct case-label
+    (or (and "case" (v expression) ":")
+        (and (v "default") ":")))
+
+(define-rule iteration-statement
+    while-statement
+  do-statement
+  for-statement)
+
+(define-struct while-statement
+    (and "while" "(" (v condition) ")" (v statement)))
+
+(define-struct do-statement
+    (and "do" (v statement) "while" "(" (v expression) ")" ";"))
+
+(define-struct for-statement
+    (and "for" "("
+         (v (or expression-statement declaration))
+         (v (? condition)) ";"
+         (v (? expression)) ")"
+         (v statement)))
+
+(define-rule jump-statement
+    continue
+  break
+  return
+  discard)
+
+(define-struct continue
+    (and "continue" ";"))
+
+(define-struct break
+    (and "break" ";"))
+
+(define-struct return
+    (and "return" (? (v expression)) ";"))
+
+(define-struct discard
+    (and "discard" ";"))
+
+(define-struct translation-unit
+    (* (v external-declaration)))
+
+(define-rule external-declaration
+    function-definition
+  declaration)
+
+(define-struct function-definition
+    (and (v function-prototype) (v compound-statement)))
