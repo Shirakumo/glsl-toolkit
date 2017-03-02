@@ -88,6 +88,7 @@
        (* `(loop until (end-of-stream-p)
                  while ,(compile-rule (second rule))
                  finally (return T)))
+       (+ (compile-rule `(and ,(second rule) (* ,(second rule)))))
        (? `(or ,(compile-rule (second rule)) ,(or (third rule) T)))
        (T rule)))))
 
