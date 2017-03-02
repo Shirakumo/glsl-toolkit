@@ -6,42 +6,47 @@
 
 (in-package #:org.shirakumo.trial.glsl.parser)
 
-(defvar *string-stream* "")
-(defvar *string-index* 0)
+(defvar *token-array* "")
+(defvar *token-index* 0)
 (defvar *no-value* (make-symbol "NO-VALUE"))
 
 (defun consume ()
-  (prog1 (char *string-stream* *string-index*)
-    (incf *string-index*)))
+  (prog1 (peek)
+    (advance)))
 
 (defun end-of-stream-p ()
-  (<= (length *string-stream*) *string-index*))
+  (<= (length *token-array*) *token-index*))
 
 (defun advance (&optional (offset 1))
-  (incf *string-index* offset))
+  (incf *token-index* offset))
 
 (defun backtrack (&optional (offset 1))
-  (decf *string-index* offset))
+  (decf *token-index* offset))
 
 (defun peek (&optional (offset 0))
-  (char *string-stream* (+ *string-index* offset)))
+  (aref *token-array* (+ *token-index* offset)))
 
-(defmacro with-string-input (string &body body)
-  `(let ((*string-stream* ,string)
-         (*string-index* 0))
+(defmacro with-token-input (string &body body)
+  `(let ((*token-array* ,string)
+         (*token-index* 0))
      ,@body))
 
 (defvar *rules* (make-hash-table :test 'eql))
 
 (defun rule (name)
-  (or (gethash name *rules*)
+  (or (find-symbol (string name) '#:org.shirakumo.trial.glsl.parser.rules)
       (error "No rule named ~s is known." name)))
 
 (defun (setf rule) (parser name)
-  (setf (gethash name *rules*) parser))
+  (let ((symbol (intern (string name) '#:org.shirakumo.trial.glsl.parser.rules)))
+    (export symbol (symbol-package symbol))
+    (setf (fdefinition symbol) parser)))
 
 (defun remove-rule (name)
-  (remhash name *rules*))
+  (let ((symbol (intern (string name) '#:org.shirakumo.trial.glsl.parser.rules)))
+    (unexport symbol (symbol-package symbol))
+    (fmakunbound symbol)
+    (unintern symbol (symbol-package symbol))))
 
 (defun consume-whitespace ()
   (loop until (end-of-stream-p)
@@ -52,11 +57,11 @@
                (return))))
 
 (defun consume-string (string)
-  (let ((start *string-index*))
+  (let ((start *token-index*))
     (loop for comp across string
           do (when (or (end-of-stream-p)
                        (char/= comp (consume)))
-               (setf *string-index* start)
+               (setf *token-index* start)
                (return NIL))
           finally (return string))))
 
@@ -73,11 +78,14 @@
 (defun compile-rule (rule)
   (etypecase rule
     (null)
+    (keyword
+     `(when (eq ,rule (peek))
+        (consume)))
     (symbol
      (unless (ignore-errors (rule rule))
        (alexandria:simple-style-warning
         "No rule named ~s is known." rule))
-     `(progn (consume-whitespace) (funcall (rule ',rule))))
+     `(funcall (rule ',rule)))
     (character
      `(when (char= ,rule (peek))
         (consume)))
@@ -85,9 +93,9 @@
      `(consume-string ,rule))
     (cons
      (case (first rule)
-       (and `(let ((index *string-index*))
+       (and `(let ((index *token-index*))
                (or (and ,@(mapcar #'compile-rule (rest rule)))
-                   (null (setf *string-index* index)))))
+                   (null (setf *token-index* index)))))
        (or `(or ,@(mapcar #'compile-rule (rest rule))))
        (notany `(consume-notany ',(second rule)))
        (any `(consume-any ',(second rule)))
@@ -102,32 +110,107 @@
        (T rule)))))
 
 (defmacro define-rule (name &body rules)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (setf (rule ',name)
-           (lambda ()
-             (let ((v))
-               (flet ((v (value)
-                        (when value (setf v value))))
-                 (declare (ignorable #'v))
-                 (or v
-                     ,(compile-rule `(or ,@rules)))))))
-     ',name))
+  (let ((val (gensym "VALUE"))
+        (name (intern (string name) '#:org.shirakumo.trial.glsl.parser.rules)))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (defun ,name ()
+         (let ((v))
+           (flet ((v (value)
+                    (when value (setf v value))))
+             (declare (ignorable #'v))
+             (let ((,val ,(compile-rule `(or ,@rules))))
+               (or v ,val)))))
+       (export ',name '#:org.shirakumo.trial.glsl.parser.rules)
+       ',name)))
 
 (defmacro define-struct (name rule &body transform)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (setf (rule ',name)
-           (lambda ()
-             (let ((v))
-               (flet ((v (value)
-                        (when value (push value v) value)))
-                 (declare (ignorable #'v))
-                 (when ,(compile-rule rule)
-                   (setf v (nreverse v))
-                   ,(if transform
-                        `(progn ,@transform)
-                        `(list* ',name v)))))))
-     ',name))
+  (let ((name (intern (string name) '#:org.shirakumo.trial.glsl.parser.rules)))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (defun ,name ()
+         (let ((v))
+           (flet ((v (value)
+                    (when value (push value v) value)))
+             (declare (ignorable #'v))
+             (when ,(compile-rule rule)
+               (setf v (nreverse v))
+               ,(if transform
+                    `(progn ,@transform)
+                    `(list* ',name v))))))
+       (export ',name '#:org.shirakumo.trial.glsl.parser.rules)
+       ',name)))
+
+(defmacro trace-parsing ()
+  (let ((symbols))
+    (do-symbols (symbol '#:org.shirakumo.trial.glsl.parser.rules)
+      (push symbol symbols))
+    `(progn (trace ,@symbols) T)))
+
+(defmacro untrace-parsing ()
+  (let ((symbols))
+    (do-symbols (symbol '#:org.shirakumo.trial.glsl.parser.rules)
+      (push symbol symbols))
+    `(progn (untrace ,@symbols) T)))
+
+(defun newline-p (input)
+  (or (char= input #\Linefeed)
+      (char= input #\Return)))
+
+(defun normalize-shader-source (input)
+  (etypecase input
+    (string (with-input-from-string (stream input)
+              (normalize-shader-source stream)))
+    (stream
+     (with-output-to-string (output)
+       (loop for char = (read-char input NIL)
+             while char
+             do (case char
+                  ;; Handle backslash escape
+                  (#\\
+                   (cond ((newline-p (peek-char NIL input NIL))
+                          (read-char input)
+                          (when (newline-p (peek-char NIL input NIL))
+                            (read-char input)))
+                         (T
+                          (error "Illegal backslash without newline."))))
+                  ;; Handle newline behaviour and such
+                  ((#\Return #\Linefeed)
+                   (when (newline-p (peek-char NIL input NIL))
+                     (read-char input))
+                   (write-char #\Newline output))
+                  ;; Handle comments
+                  (#\/
+                   (case (peek-char NIL input)
+                     (#\/ (loop for prev = #\  then char
+                                for char = (read-char input NIL)
+                                until (or (not char)
+                                          (and (not (char= #\\ prev))
+                                               (newline-p char))))
+                      (write-char #\Newline output))
+                     (#\* (loop for prev = #\  then char
+                                for char = (read-char input)
+                                until (and (char= #\* prev)
+                                           (char= #\/ char))))
+                     (T (write-char char output))))
+                  ;; Handle consecutive whitespace
+                  ((#\Tab #\Space)
+                   (loop for char = (read-char input NIL)
+                         while (or (eql char #\Tab)
+                                   (eql char #\Space))
+                         finally (when char (unread-char char input)))
+                   (write-char #\Space output))
+                  ;; Handle other chars
+                  (T (write-char char output))))))))
+
+(defun lex (input &optional (toplevel-rule 'tokenize))
+  (with-token-input (normalize-shader-source input)
+    (funcall (rule toplevel-rule))))
 
 (defun parse (input &optional (toplevel-rule 'shader))
-  (with-string-input input
-    (funcall (rule toplevel-rule))))
+  (etypecase input
+    (list
+     (parse (coerce input 'vector) toplevel-rule))
+    (string
+     (parse (lex input) toplevel-rule))
+    (vector
+     (with-token-input input
+       (funcall (rule toplevel-rule))))))

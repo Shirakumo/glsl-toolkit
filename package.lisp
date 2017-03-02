@@ -11,3 +11,7 @@
   (:use #:cl)
   (:export
    ))
+
+(defpackage #:glsl-parser-rules
+  (:nicknames #:org.shirakumo.trial.glsl.parser.rules)
+  (:use))
