@@ -8,6 +8,7 @@
 
 (defvar *string-stream* "")
 (defvar *string-index* 0)
+(defvar *no-value* (make-symbol "NO-VALUE"))
 
 (defun consume ()
   (prog1 (char *string-stream* *string-index*)
@@ -89,7 +90,7 @@
                  while ,(compile-rule (second rule))
                  finally (return T)))
        (+ (compile-rule `(and ,(second rule) (* ,(second rule)))))
-       (? `(or ,(compile-rule (second rule)) ,(or (third rule) T)))
+       (? `(or ,(compile-rule (second rule)) ,(or (third rule) `',*no-value*)))
        (T rule)))))
 
 (defmacro define-rule (name &body rules)
