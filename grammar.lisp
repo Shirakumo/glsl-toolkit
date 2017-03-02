@@ -1,6 +1,12 @@
-(in-package #:glsl-parser)
+#|
+ This file is a part of glsl-parser
+ (c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
+ Author: Nicolas Hafner <shinmera@tymoon.eu>
+|#
 
-;; Lexer
+(in-package #:org.shirakumo.trial.glsl.parser)
+
+;;; Lexer
 (define-rule whitespace
   #\Newline #\Space #\Tab)
 
@@ -99,8 +105,7 @@
     (* (v token))
   v)
 
-
-;; Parser
+;;; Parser
 (define-struct integer-constant
     (and (consp (peek))
          (integerp (second (peek))))
@@ -475,8 +480,8 @@
         (and :\{ (v initializer) (* (and :\, (v initializer))) (? :\,) :\})))
 
 (define-rule statement
-  compound-statement
-  simple-statement)
+  simple-statement
+  compound-statement)
 
 (define-rule simple-statement
   declaration
@@ -485,13 +490,14 @@
   switch-statement
   case-label
   iteration-statement
-  jump-statement)
+  jump-statement
+  :\;)
 
 (define-struct compound-statement
     (and :\{ (* (v statement)) :\}))
 
 (define-rule expression-statement
-  (and (? (v expression)) :\;))
+  (and (v expression) :\;))
 
 (define-struct selection-statement
     (and :if :\( (v expression) :\) (v statement) (? (and :else (v statement)))))

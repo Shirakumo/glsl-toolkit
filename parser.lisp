@@ -10,21 +10,41 @@
 (defvar *token-index* 0)
 (defvar *no-value* (make-symbol "NO-VALUE"))
 
-(defun consume ()
-  (prog1 (peek)
-    (advance)))
+(deftype index ()
+  `(integer 0 ,array-dimension-limit))
 
 (defun end-of-stream-p ()
   (<= (length *token-array*) *token-index*))
 
+(define-compiler-macro end-of-stream-p ()
+  `(<= (length (the vector *token-array*))
+       (the index *token-index*)))
+
 (defun advance (&optional (offset 1))
   (incf *token-index* offset))
+
+(define-compiler-macro advance (&optional (offset 1))
+  `(setf *token-index* (+ (the index *token-index*) ,offset)))
 
 (defun backtrack (&optional (offset 1))
   (decf *token-index* offset))
 
+(define-compiler-macro backtrack (&optional (offset 1))
+  `(setf *token-index* (- (the index *token-index*) ,offset)))
+
 (defun peek (&optional (offset 0))
   (aref *token-array* (+ *token-index* offset)))
+
+(define-compiler-macro peek (&optional (offset 0))
+  `(aref (the vector *token-array*) (+ (the index *token-index*) ,offset)))
+
+(defun consume ()
+  (prog1 (peek)
+    (advance)))
+
+(define-compiler-macro consume ()
+  `(prog1 (peek)
+     (advance)))
 
 (defmacro with-token-input (string &body body)
   `(let ((*token-array* ,string)
@@ -82,10 +102,7 @@
      `(when (eq ,rule (peek))
         (consume)))
     (symbol
-     (unless (ignore-errors (rule rule))
-       (alexandria:simple-style-warning
-        "No rule named ~s is known." rule))
-     `(funcall (rule ',rule)))
+     `(,(intern (string rule) '#:org.shirakumo.trial.glsl.parser.rules)))
     (character
      `(when (char= ,rule (peek))
         (consume)))
@@ -138,18 +155,6 @@
                     `(list* ',name v))))))
        (export ',name '#:org.shirakumo.trial.glsl.parser.rules)
        ',name)))
-
-(defmacro trace-parsing ()
-  (let ((symbols))
-    (do-symbols (symbol '#:org.shirakumo.trial.glsl.parser.rules)
-      (push symbol symbols))
-    `(progn (trace ,@symbols) T)))
-
-(defmacro untrace-parsing ()
-  (let ((symbols))
-    (do-symbols (symbol '#:org.shirakumo.trial.glsl.parser.rules)
-      (push symbol symbols))
-    `(progn (untrace ,@symbols) T)))
 
 (defun newline-p (input)
   (or (char= input #\Linefeed)
@@ -214,3 +219,32 @@
     (vector
      (with-token-input input
        (funcall (rule toplevel-rule))))))
+
+(defvar *traced* (make-hash-table :test 'eql))
+(defvar *trace-level* 0)
+
+(defun trace-parse-func (name)
+  (unless (gethash name *traced*)
+    (setf (gethash name *traced*) (fdefinition name))
+    (setf (fdefinition name)
+          (lambda ()
+            (format T "~&~v{ ~}~:* > ~a : ~a~%"
+                    *trace-level* *token-index* name)
+            (let* ((*trace-level* (1+ *trace-level*))
+                   (value (funcall (gethash name *traced*))))
+              (format T "~&~v{ ~}~:* < ~a : ~a ~a~%"
+                      *trace-level* *token-index* name value)
+              value)))))
+
+(defun untrace-parse-func (name)
+  (when (gethash name *traced*)
+    (setf (fdefinition name) (gethash name *traced*))
+    (remhash name *traced*)))
+
+(defun trace-parse ()
+  (do-symbols (symbol '#:org.shirakumo.trial.glsl.parser.rules)
+    (when (fboundp symbol) (trace-parse-func symbol))))
+
+(defun untrace-parse ()
+  (do-symbols (symbol '#:org.shirakumo.trial.glsl.parser.rules)
+    (when (fboundp symbol) (untrace-parse-func symbol))))
