@@ -37,11 +37,11 @@
     (v identifier))
 
 (define-rule primary-expression
-    (or (v variable-identifier)
-        (v integer-constant)
-        (v float-constant)
-        (v boolean-constant)
-        (and "(" (v expression) ")")))
+  variable-identifier
+  integer-constant
+  float-constant
+  boolean-constant
+  (and "(" (v expression) ")"))
 
 (define-struct field-reference
     (and (v postfix-expression) "." (v identifier)))
@@ -312,7 +312,7 @@
     (+ (and "[" (? (v constant-expression)) "]")))
 
 (define-rule type-specifier-nonarray
-    basic-type
+  basic-type
   struct-specifier
   type-name)
 
@@ -409,13 +409,13 @@
     (and "{" (* (v statement)) "}"))
 
 (define-rule expression-statement
-    (and (? (v expression)) ";"))
+  (and (? (v expression)) ";"))
 
 (define-struct selection-statement
     (and "if" "(" (v expression) ")" (v statement) (? (and "else" (v statement)))))
 
 (define-rule condition
-    expression
+  expression
   condition-declarator)
 
 (define-struct condition-declarator
@@ -430,7 +430,7 @@
         (and (v "default") ":")))
 
 (define-rule iteration-statement
-    while-statement
+  while-statement
   do-statement
   for-statement)
 
@@ -448,7 +448,7 @@
          (v statement)))
 
 (define-rule jump-statement
-    continue
+  continue
   break
   return
   discard)
@@ -465,12 +465,8 @@
 (define-struct discard
     (and "discard" ";"))
 
-(define-struct translation-unit
-    (* (v external-declaration)))
-
-(define-rule external-declaration
-    function-definition
-  declaration)
-
 (define-struct function-definition
     (and (v function-prototype) (v compound-statement)))
+
+(define-struct shader
+    (* (v (or function-definition declaration))))

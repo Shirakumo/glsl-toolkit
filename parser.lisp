@@ -119,6 +119,6 @@
                         `(list* ',name v)))))))
      ',name))
 
-(defun parse (input &optional toplevel-rule)
+(defun parse (input &optional (toplevel-rule 'shader))
   (with-string-input input
     (funcall (rule toplevel-rule))))
