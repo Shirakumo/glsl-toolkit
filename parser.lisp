@@ -43,6 +43,14 @@
 (defun remove-rule (name)
   (remhash name *rules*))
 
+(defun consume-whitespace ()
+  (loop until (end-of-stream-p)
+        for char = (peek)
+        do (if (or (char= char #\Space)
+                   (char= char #\Newline))
+               (advance)
+               (return))))
+
 (defun consume-string (string)
   (let ((start *string-index*))
     (loop for comp across string
@@ -69,7 +77,7 @@
      (unless (ignore-errors (rule rule))
        (alexandria:simple-style-warning
         "No rule named ~s is known." rule))
-     `(funcall (rule ',rule)))
+     `(progn (consume-whitespace) (funcall (rule ',rule))))
     (character
      `(when (char= ,rule (peek))
         (consume)))
