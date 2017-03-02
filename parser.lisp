@@ -110,9 +110,11 @@
      `(consume-string ,rule))
     (cons
      (case (first rule)
-       (and `(let ((index *token-index*))
+       (and `(let ((index *token-index*)
+                   (preval v))
                (or (and ,@(mapcar #'compile-rule (rest rule)))
-                   (null (setf *token-index* index)))))
+                   (prog1 NIL (setf *token-index* index
+                                    v preval)))))
        (or `(or ,@(mapcar #'compile-rule (rest rule))))
        (notany `(consume-notany ',(second rule)))
        (any `(consume-any ',(second rule)))
