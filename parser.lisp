@@ -225,18 +225,20 @@
 (defvar *traced* (make-hash-table :test 'eql))
 (defvar *trace-level* 0)
 
+(defun call-traced-function (name)
+  (format T "~&~v{ ~}~2:* :~a > ~a : ~a~%"
+          *trace-level* *token-index* name)
+  (let* ((value (let ((*trace-level* (1+ *trace-level*)))
+                  (funcall (gethash name *traced*)))))
+    (format T "~&~v{ ~}~2:* :~a < ~a : ~a ~a~%"
+            *trace-level* *token-index* name value)
+    value))
+
 (defun trace-parse-func (name)
   (unless (gethash name *traced*)
     (setf (gethash name *traced*) (fdefinition name))
     (setf (fdefinition name)
-          (lambda ()
-            (format T "~&~v{ ~}~:* > ~a : ~a~%"
-                    *trace-level* *token-index* name)
-            (let* ((*trace-level* (1+ *trace-level*))
-                   (value (funcall (gethash name *traced*))))
-              (format T "~&~v{ ~}~:* < ~a : ~a ~a~%"
-                      *trace-level* *token-index* name value)
-              value)))))
+          (lambda () (call-traced-function name)))))
 
 (defun untrace-parse-func (name)
   (when (gethash name *traced*)
