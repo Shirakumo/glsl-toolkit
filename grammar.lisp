@@ -97,8 +97,8 @@
   (and (* whitespace)
        (or keyword-token
            identifier-token
-           integer-token
            float-token
+           integer-token
            operator
            preprocessor-token)))
 
