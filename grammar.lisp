@@ -7,28 +7,28 @@
 (in-package #:org.shirakumo.trial.glsl.parser)
 
 ;;; Lexer
-(define-rule whitespace
+(define-reference whitespace
   #\Newline #\Space #\Tab)
 
-(define-struct integer-token
+(define-object integer-token
     (and (v (or decimal-token
                 hexadecimal-token
                 octal-token))
          (? (v (any "uU")))))
 
-(define-struct decimal-token
+(define-object decimal-token
     (or (and (v (any "123456789")) (* (v (any "0123456789")))))
   (parse-integer (coerce v 'string) :radix 10))
 
-(define-struct octal-token
+(define-object octal-token
     (and (v (any "0")) (* (v (any "01234567"))))
   (parse-integer (coerce v 'string) :radix 8))
 
-(define-struct hexadecimal-token
+(define-object hexadecimal-token
     (and "0x" (* (v (any "0123456789abcdefABCDEF"))))
   (parse-integer (coerce v 'string) :radix 16))
 
-(define-struct float-token
+(define-object float-token
     (and (* (v (any "0123456789"))) (v #\.) (* (v (any "0123456789")))
          (? (when (any "eE") (v (any "+-")) (* (v (any "0123456789")))))
          (v (? (or "f" "F" "lf" "LF") "f")))
@@ -36,12 +36,12 @@
                   'single-float 'double-float)))
     (parse-float:parse-float (coerce (butlast v) 'string) :type type)))
 
-(define-struct identifier-token
+(define-object identifier-token
     (and (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"))
          (* (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"))))
   (coerce v 'string))
 
-(define-struct keyword-token
+(define-object keyword-token
     (v (or "writeonly" "while" "volatile" "void" "vec4" "vec3" "vec2" "varying" "uvec4"
            "uvec3" "uvec2" "using" "usamplerCubeArray" "usamplerCube" "usamplerBuffer"
            "usampler3D" "usampler2DRect" "usampler2DMSArray" "usampler2DMS"
@@ -76,15 +76,15 @@
            "atomic_uint" "asm" "active"))
   (intern (string-upcase (first v)) :keyword))
 
-(define-struct preprocessor-token
+(define-object preprocessor-token
     (and (v #\#) (* (v (notany (#\Newline)))))
   (list 'org.shirakumo.trial.glsl.parser.rules::preprocessor-directive (coerce v 'string)))
 
 (defmacro define-operator-structs (&body names)
   `(progn
      ,@(loop for name in names
-             collect `(define-struct ,name ,(string name) ,(intern (string name) :keyword)))
-     (define-rule operator
+             collect `(define-object ,name ,(string name) ,(intern (string name) :keyword)))
+     (define-reference operator
        ,@names)))
 
 (define-operator-structs
@@ -93,7 +93,7 @@
   + - * / % & ^ ! \|
   \( \) \[ \] \{ \} \; \. ? \: \,)
 
-(define-rule token
+(define-reference token
   (and (* whitespace)
        (or keyword-token
            identifier-token
@@ -102,285 +102,285 @@
            operator
            preprocessor-token)))
 
-(define-struct tokenize
+(define-object tokenize
     (* (v token))
   v)
 
 ;;; Parser
-(define-struct integer-constant
+(define-object integer-constant
     (and (consp (peek))
          (integerp (second (peek))))
   (consume))
 
-(define-struct float-constant
+(define-object float-constant
     (floatp (peek))
   (consume))
 
-(define-struct boolean-constant
+(define-object boolean-constant
     (v (or :true :false))
   v)
 
-(define-struct identifier
+(define-object identifier
     (stringp (peek))
   (consume))
 
-(define-struct preprocessor-directive
+(define-object preprocessor-directive
     (and (consp (peek))
          (stringp (second (peek))))
   (consume))
 
-(define-struct variable-identifier
+(define-object variable-identifier
     (v identifier))
 
-(define-rule primary-expression
+(define-reference primary-expression
   integer-constant
   float-constant
   boolean-constant
   (and :\( (v expression) :\))
   variable-identifier)
 
-(define-rule postfix-expression
+(define-reference postfix-expression
   modified-reference
   primary-expression)
 
-(define-struct modified-reference
+(define-object modified-reference
     (and (v primary-expression)
          (v reference-modifier)
          (* (v reference-modifier))))
 
-(define-rule reference-modifier
+(define-reference reference-modifier
   call-modifier
   field-modifier
   array-modifier
   increment-modifier
   decrement-modifier)
 
-(define-struct field-modifier
+(define-object field-modifier
     (and :\. (v identifier)))
 
-(define-struct array-modifier
+(define-object array-modifier
     (and :\[ (v expression) :\]))
 
-(define-struct increment-modifier
+(define-object increment-modifier
     :++)
 
-(define-struct decrement-modifier
+(define-object decrement-modifier
     :--)
 
-(define-struct call-modifier
+(define-object call-modifier
     (and :\( (or :void
                  (? (and (v assignment-expression)
                          (* (and :\, (v assignment-expression))))))
          :\)))
 
-(define-struct same-+
+(define-object same-+
     (and :+ (v unary-expression)))
 
-(define-struct negation
+(define-object negation
     (and :- (v unary-expression)))
 
-(define-struct inversion
+(define-object inversion
     (and :! (v unary-expression)))
 
-(define-struct bit-inversion
+(define-object bit-inversion
     (and :~ (v unary-expression)))
 
-(define-struct prefix-increment
+(define-object prefix-increment
     (and :++ (v unary-expression)))
 
-(define-struct prefix-decrement
+(define-object prefix-decrement
     (and :-- (v unary-expression)))
 
-(define-rule unary-op-expression
+(define-reference unary-op-expression
   same-+
   negation
   inversion
   bit-inversion)
 
-(define-rule unary-expression
+(define-reference unary-expression
   postfix-expression
   prefix-increment
   prefix-decrement
   unary-op-expression)
 
-(define-rule multiplicative-expression
+(define-reference multiplicative-expression
   multiplication
   division
   modulus
   unary-expression)
 
-(define-struct multiplication
+(define-object multiplication
     (and (v unary-expression) :* (v multiplicative-expression)))
 
-(define-struct division
+(define-object division
     (and (v unary-expression) :/ (v multiplicative-expression)))
 
-(define-struct modulus
+(define-object modulus
     (and (v unary-expression) :% (v multiplicative-expression)))
 
-(define-rule additive-expression
+(define-reference additive-expression
   addition
   subtraction
   multiplicative-expression)
 
-(define-struct addition
+(define-object addition
     (and (v multiplicative-expression) :+ (v additive-expression)))
 
-(define-struct subtraction
+(define-object subtraction
     (and (v multiplicative-expression) :- (v additive-expression)))
 
-(define-rule shift-expression
+(define-reference shift-expression
   left-shift
   right-shift
   additive-expression)
 
-(define-struct left-shift
+(define-object left-shift
     (and (v additive-expression) :<< (v shift-expression)))
 
-(define-struct right-shift
+(define-object right-shift
     (and (v additive-expression) :>> (v shift-expression)))
 
-(define-rule relational-expression
+(define-reference relational-expression
   less-than
   greater-than
   less-equal-than
   greater-equal-than
   shift-expression)
 
-(define-struct less-than
+(define-object less-than
     (and (v shift-expression) :< (v relational-expression)))
 
-(define-struct greater-than
+(define-object greater-than
     (and (v shift-expression) :> (v relational-expression)))
 
-(define-struct less-equal-than
+(define-object less-equal-than
     (and (v shift-expression) :<= (v relational-expression)))
 
-(define-struct greater-equal-than
+(define-object greater-equal-than
     (and (v shift-expression) :>= (v relational-expression)))
 
-(define-rule equality-expression
+(define-reference equality-expression
   equal
   not-equal
   relational-expression)
 
-(define-struct equal
+(define-object equal
     (and (v relational-expression) :== (v equality-expression)))
 
-(define-struct not-equal
+(define-object not-equal
     (and (v relational-expression) :!= (v equality-expression)))
 
-(define-rule and-expression
+(define-reference and-expression
   bitwise-and
   equality-expression)
 
-(define-struct bitwise-and
+(define-object bitwise-and
     (and (v equality-expression) :& (v and-expression)))
 
-(define-rule exclusive-or-expression
+(define-reference exclusive-or-expression
   exclusive-or
   and-expression)
 
-(define-struct exclusive-or
+(define-object exclusive-or
     (and (v and-expression) :^ (v exclusive-or-expression)))
 
-(define-rule inclusive-or-expression
+(define-reference inclusive-or-expression
   inclusive-or
   exclusive-or-expression)
 
-(define-struct inclusive-or
+(define-object inclusive-or
     (and (v exclusive-or-expression) :\| (v inclusive-or-expression)))
 
-(define-rule logical-and-expression
+(define-reference logical-and-expression
   logical-and
   inclusive-or-expression)
 
-(define-struct logical-and
+(define-object logical-and
     (and (v inclusive-or-expression) :&& (v logical-and-expression)))
 
-(define-rule logical-xor-expression
+(define-reference logical-xor-expression
   logical-xor
   logical-and-expression)
 
-(define-struct logical-xor
+(define-object logical-xor
     (and (v logical-and-expression) :^^ (v logical-xor-expression)))
 
-(define-rule logical-or-expression
+(define-reference logical-or-expression
   logical-or
   logical-xor-expression)
 
-(define-struct logical-or
+(define-object logical-or
     (and (v logical-xor-expression) :\|\| (v logical-or-expression)))
 
-(define-rule conditional-expression
+(define-reference conditional-expression
   conditional
   logical-or-expression)
 
-(define-struct conditional
+(define-object conditional
     (and (v logical-or-expression) :? (v expression) :\: (v assignment-expression)))
 
-(define-rule assignment-expression
+(define-reference assignment-expression
   assignment
   conditional-expression)
 
-(define-struct assignment
+(define-object assignment
     (and (v unary-expression)
          (v (or := :*= :/= :%= :+= :-= :<= :>= :&= :^= :\|=))
          (v assignment-expression)))
 
-(define-struct expression
+(define-object expression
     (and (v assignment-expression (* (and :\, (v assignment-expression))))))
 
-(define-rule constant-expression
+(define-reference constant-expression
   conditional-expression)
 
-(define-rule declaration
+(define-reference declaration
   (and (v (or function-prototype
               variable-declaration
               precision-declarator
               struct-declaration))
        :\;))
 
-(define-struct function-prototype
+(define-object function-prototype
     (and (v fully-specified-type) (v identifier) (v function-prototype-parameters)))
 
-(define-struct function-prototype-parameters
+(define-object function-prototype-parameters
     (and :\( (? (v parameter-declaration)) (* (and :\, (v parameter-declaration))) :\)))
 
-(define-struct parameter-declaration
+(define-object parameter-declaration
     (and (v (? type-qualifier)) (v type-specifier)
          (v (? identifier)) (? (v array-specifier))))
 
-(define-struct precision-declarator
+(define-object precision-declarator
     (and :precision (v (or :highp :mediump :lowp)) (v type-specifier)))
 
-(define-struct variable-declaration
+(define-object variable-declaration
     (and (v fully-specified-type) (v variable-initializer)
          (* (and :\, (v variable-initializer)))))
 
-(define-struct variable-initializer
+(define-object variable-initializer
     (and (v identifier) (v (? array-specifier)) (? (and := (v initializer)))))
 
-(define-struct fully-specified-type
+(define-object fully-specified-type
     (and (v (? type-qualifier)) (v type-specifier)))
 
-(define-rule invariant-qualifier
+(define-reference invariant-qualifier
   :invariant)
 
-(define-rule interpolation-qualifier
+(define-reference interpolation-qualifier
   :smooth :flat :noperspective)
 
-(define-struct layout-qualifier
+(define-object layout-qualifier
     (and :layout :\( (v layout-qualifier-id) (* (and :\, (v layout-qualifier-id))) :\)))
 
-(define-struct layout-qualifier-id
+(define-object layout-qualifier-id
     (or (v :shared)
         (and (v identifier) (? (and := (v constant-expression))))))
 
-(define-rule precise-qualifier
+(define-reference precise-qualifier
   :precise)
 
-(define-struct type-qualifier
+(define-object type-qualifier
     (+ (v (or storage-qualifier
               subroutine-qualifier
               layout-qualifier
@@ -389,32 +389,32 @@
               invariant-qualifier
               precise-qualifier))))
 
-(define-rule storage-qualifier
+(define-reference storage-qualifier
   :const :inout :in :out :centroid :patch :sample
   :uniform :buffer :shared :coherent :volatile
   :restrict :readonly :writeonly)
 
-(define-struct subroutine-qualifier
+(define-object subroutine-qualifier
     (and :subroutine (? (and :\( (v type-name) :\)))))
 
-(define-rule precision-qualifier
+(define-reference precision-qualifier
   :highp :mediump :lowp)
 
-(define-struct type-specifier
+(define-object type-specifier
     (and (v type-specifier-nonarray) (? (v array-specifier))))
 
-(define-struct array-specifier
+(define-object array-specifier
     (+ (and :\[ (? (v constant-expression)) :\])))
 
-(define-rule type-specifier-nonarray
+(define-reference type-specifier-nonarray
   basic-type
   struct-specifier
   type-name)
 
-(define-struct type-name
+(define-object type-name
     (v identifier))
 
-(define-rule basic-type
+(define-reference basic-type
   ;; Transparent Types
   :void :bool :int :uint :float :double
   :vec2 :vec3 :vec4
@@ -473,26 +473,26 @@
   :usampler2DMSArray :uimage2DMSArray
   :usamplerCubeArray :uimageCubeArray)
 
-(define-struct struct-specifier
+(define-object struct-specifier
     (and :struct (v (? identifier)) :\{ (+ (v struct-declaration)) :\}))
 
-(define-struct struct-declaration
+(define-object struct-declaration
     (and (v (? type-qualifier)) (v type-specifier)
          (v struct-declarator) (* (and :\, (v struct-declarator))) :\;))
 
-(define-struct struct-declarator
+(define-object struct-declarator
     (and (v identifier) (? (v array-specifier))))
 
-(define-struct initializer
+(define-object initializer
     (or (v assignment-expression)
         (and :\{ (v initializer) (* (and :\, (v initializer))) (? :\,) :\})))
 
-(define-rule statement
+(define-reference statement
   simple-statement
   compound-statement
   preprocessor-directive)
 
-(define-rule simple-statement
+(define-reference simple-statement
   declaration
   expression-statement
   selection-statement
@@ -502,68 +502,68 @@
   jump-statement
   :\;)
 
-(define-struct compound-statement
+(define-object compound-statement
     (and :\{ (* (v statement)) :\}))
 
-(define-rule expression-statement
+(define-reference expression-statement
   (and (v expression) :\;))
 
-(define-struct selection-statement
+(define-object selection-statement
     (and :if :\( (v expression) :\) (v statement) (? (and :else (v statement)))))
 
-(define-rule condition
+(define-reference condition
   expression
   condition-declarator)
 
-(define-struct condition-declarator
+(define-object condition-declarator
     (and (v fully-specified-type) (v identifier) := (v initializer)))
 
-(define-struct switch-statement
+(define-object switch-statement
     (and :switch :\( (v expression) :\)
          :\{ (* (v statement)) :\}))
 
-(define-struct case-label
+(define-object case-label
     (or (and :case (v expression) :\:)
         (and (v :default) :\:)))
 
-(define-rule iteration-statement
+(define-reference iteration-statement
   while-statement
   do-statement
   for-statement)
 
-(define-struct while-statement
+(define-object while-statement
     (and :while :\( (v condition) :\) (v statement)))
 
-(define-struct do-statement
+(define-object do-statement
     (and :do (v statement) :while :\( (v expression) :\) :\;))
 
-(define-struct for-statement
+(define-object for-statement
     (and :for :\(
          (v (or expression-statement declaration))
          (v (? condition)) :\;
          (v (? expression)) :\)
          (v statement)))
 
-(define-rule jump-statement
+(define-reference jump-statement
   continue
   break
   return
   discard)
 
-(define-struct continue
+(define-object continue
     (and :continue :\;))
 
-(define-struct break
+(define-object break
     (and :break :\;))
 
-(define-struct return
+(define-object return
     (and :return (? (v expression)) :\;))
 
-(define-struct discard
+(define-object discard
     (and :discard :\;))
 
-(define-struct function-definition
+(define-object function-definition
     (and (v function-prototype) (v compound-statement)))
 
-(define-struct shader
+(define-object shader
     (* (v (or function-definition declaration preprocessor-directive))))
