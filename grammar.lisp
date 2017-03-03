@@ -18,15 +18,15 @@
 
 (define-struct decimal-token
     (or (and (v (any "123456789")) (* (v (any "0123456789")))))
-  (parse-integer (map 'string #'identity v) :radix 10))
+  (parse-integer (coerce v 'string) :radix 10))
 
 (define-struct octal-token
     (and (v (any "0")) (* (v (any "01234567"))))
-  (parse-integer (map 'string #'identity v) :radix 8))
+  (parse-integer (coerce v 'string) :radix 8))
 
 (define-struct hexadecimal-token
     (and "0x" (* (v (any "0123456789abcdefABCDEF"))))
-  (parse-integer (map 'string #'identity v) :radix 16))
+  (parse-integer (coerce v 'string) :radix 16))
 
 (define-struct float-token
     (and (* (v (any "0123456789"))) (v #\.) (* (v (any "0123456789")))
@@ -34,12 +34,12 @@
          (v (? (or "f" "F" "lf" "LF") "f")))
   (let ((type (if (string-equal "f" (car (last v)))
                   'single-float 'double-float)))
-    (parse-float:parse-float (map 'string #'identity (butlast v)) :type type)))
+    (parse-float:parse-float (coerce (butlast v) 'string) :type type)))
 
 (define-struct identifier-token
     (and (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"))
          (* (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"))))
-  (map 'string #'identity v))
+  (coerce v 'string))
 
 (define-struct keyword-token
     (v (or "writeonly" "while" "volatile" "void" "vec4" "vec3" "vec2" "varying" "uvec4"
@@ -76,9 +76,9 @@
            "atomic_uint" "asm" "active"))
   (intern (string-upcase (first v)) :keyword))
 
-(define-struct preprocessor-directive
-    (and (v #\#) (v (notany '(#\Newline))))
-  (list 'preprocessor-directive (map 'string #'identity v)))
+(define-struct preprocessor-token
+    (and (v #\#) (* (v (notany (#\Newline)))))
+  (list 'org.shirakumo.trial.glsl.parser.rules::preprocessor-directive (coerce v 'string)))
 
 (defmacro define-operator-structs (&body names)
   `(progn
@@ -99,7 +99,8 @@
            identifier-token
            integer-token
            float-token
-           operator)))
+           operator
+           preprocessor-token)))
 
 (define-struct tokenize
     (* (v token))
@@ -123,6 +124,11 @@
     (stringp (peek))
   (consume))
 
+(define-struct preprocessor-directive
+    (and (consp (peek))
+         (stringp (second (peek))))
+  (consume))
+
 (define-struct variable-identifier
     (v identifier))
 
@@ -134,16 +140,16 @@
   variable-identifier)
 
 (define-rule postfix-expression
-  primary-expression
-  modified-reference)
+  modified-reference
+  primary-expression)
 
 (define-struct modified-reference
     (and (v primary-expression)
-         (v (or call-modifier
-                field-modifier
-                array-modifier
-                increment-modifier
-                decrement-modifier))))
+         (? (* (v (or call-modifier
+                      field-modifier
+                      array-modifier
+                      increment-modifier
+                      decrement-modifier))))))
 
 (define-struct field-modifier
     (and :\. (v identifier)))
@@ -158,12 +164,12 @@
     :--)
 
 (define-struct call-modifier
-    (and :\( (v function-call-arglist) :\)))
+    (and :\( (? (v function-call-arglist)) :\)))
 
 (define-struct function-call-arglist
-    (? (or (v :void)
-           (and (v assignment-expression)
-                (* :\, (v assignment-expression))))))
+    (or (v :void)
+        (and (v assignment-expression)
+             (* :\, (v assignment-expression)))))
 
 (define-struct same-+
     (and :+ (v unary-expression)))
@@ -196,10 +202,10 @@
   unary-op-expression)
 
 (define-rule multiplicative-expression
-  unary-expression
   multiplication
   division
-  modulus)
+  modulus
+  unary-expression)
 
 (define-struct multiplication
     (and (v unary-expression) :* (v multiplicative-expression)))
@@ -211,9 +217,9 @@
     (and (v unary-expression) :% (v multiplicative-expression)))
 
 (define-rule additive-expression
-  multiplicative-expression
   addition
-  subtraction)
+  subtraction
+  multiplicative-expression)
 
 (define-struct addition
     (and (v multiplicative-expression) :+ (v additive-expression)))
@@ -222,9 +228,9 @@
     (and (v multiplicative-expression) :- (v additive-expression)))
 
 (define-rule shift-expression
-  additive-expression
   left-shift
-  right-shift)
+  right-shift
+  additive-expression)
 
 (define-struct left-shift
     (and (v additive-expression) :<< (v shift-expression)))
@@ -233,11 +239,11 @@
     (and (v additive-expression) :>> (v shift-expression)))
 
 (define-rule relational-expression
-  shift-expression
   less-than
   greater-than
   less-equal-than
-  greater-equal-than)
+  greater-equal-than
+  shift-expression)
 
 (define-struct less-than
     (and (v shift-expression) :< (v relational-expression)))
@@ -252,9 +258,9 @@
     (and (v shift-expression) :>= (v relational-expression)))
 
 (define-rule equality-expression
-  relational-expression
   equal
-  not-equal)
+  not-equal
+  relational-expression)
 
 (define-struct equal
     (and (v relational-expression) :== (v equality-expression)))
@@ -263,57 +269,57 @@
     (and (v relational-expression) :!= (v equality-expression)))
 
 (define-rule and-expression
-  equality-expression
-  bitwise-and)
+  bitwise-and
+  equality-expression)
 
 (define-struct bitwise-and
     (and (v equality-expression) :& (v and-expression)))
 
 (define-rule exclusive-or-expression
-  and-expression
-  exclusive-or)
+  exclusive-or
+  and-expression)
 
 (define-struct exclusive-or
     (and (v and-expression) :^ (v exclusive-or-expression)))
 
 (define-rule inclusive-or-expression
-  exclusive-or-expression
-  inclusive-or)
+  inclusive-or
+  exclusive-or-expression)
 
 (define-struct inclusive-or
     (and (v exclusive-or-expression) :\| (v inclusive-or-expression)))
 
 (define-rule logical-and-expression
-  inclusive-or-expression
-  logical-and)
+  logical-and
+  inclusive-or-expression)
 
 (define-struct logical-and
     (and (v inclusive-or-expression) :&& (v logical-and-expression)))
 
 (define-rule logical-xor-expression
-  logical-and-expression
-  logical-xor)
+  logical-xor
+  logical-and-expression)
 
 (define-struct logical-xor
     (and (v logical-and-expression) :^^ (v logical-xor-expression)))
 
 (define-rule logical-or-expression
-  logical-xor-expression
-  logical-or)
+  logical-or
+  logical-xor-expression)
 
 (define-struct logical-or
     (and (v logical-xor-expression) :\|\| (v logical-or-expression)))
 
 (define-rule conditional-expression
-  logical-or-expression
-  conditional)
+  conditional
+  logical-or-expression)
 
 (define-struct conditional
     (and (v logical-or-expression) :? (v expression) :\: (v assignment-expression)))
 
 (define-rule assignment-expression
-  conditional-expression
-  assignment)
+  assignment
+  conditional-expression)
 
 (define-struct assignment
     (and (v unary-expression)
@@ -481,7 +487,8 @@
 
 (define-rule statement
   simple-statement
-  compound-statement)
+  compound-statement
+  preprocessor-directive)
 
 (define-rule simple-statement
   declaration
@@ -557,4 +564,4 @@
     (and (v function-prototype) (v compound-statement)))
 
 (define-struct shader
-    (* (v (or function-definition declaration))))
+    (* (v (or function-definition declaration preprocessor-directive))))
