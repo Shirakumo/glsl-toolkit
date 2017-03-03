@@ -145,11 +145,15 @@
 
 (define-struct modified-reference
     (and (v primary-expression)
-         (? (* (v (or call-modifier
-                      field-modifier
-                      array-modifier
-                      increment-modifier
-                      decrement-modifier))))))
+         (v reference-modifier)
+         (* (v reference-modifier))))
+
+(define-rule reference-modifier
+  call-modifier
+  field-modifier
+  array-modifier
+  increment-modifier
+  decrement-modifier)
 
 (define-struct field-modifier
     (and :\. (v identifier)))
@@ -164,12 +168,10 @@
     :--)
 
 (define-struct call-modifier
-    (and :\( (? (v function-call-arglist)) :\)))
-
-(define-struct function-call-arglist
-    (or (v :void)
-        (and (v assignment-expression)
-             (* :\, (v assignment-expression)))))
+    (and :\( (or :void
+                 (? (and (v assignment-expression)
+                         (* (and :\, (v assignment-expression))))))
+         :\)))
 
 (define-struct same-+
     (and :+ (v unary-expression)))
