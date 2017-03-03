@@ -209,36 +209,43 @@
   modulus
   unary-expression)
 
-(define-object multiplication
-    (and (v unary-expression) :* (v multiplicative-expression)))
+(defmacro define-binary-op (name left op right)
+  `(define-object ,name
+       (and (v ,left) (? (and ,op (v ,right))))
+     (if (second v)
+         (list* ',name v)
+         (first v))))
 
-(define-object division
-    (and (v unary-expression) :/ (v multiplicative-expression)))
+(define-binary-op multiplication
+    unary-expression :* multiplicative-expression)
 
-(define-object modulus
-    (and (v unary-expression) :% (v multiplicative-expression)))
+(define-binary-op division
+    unary-expression :/ multiplicative-expression)
+
+(define-binary-op modulus
+    unary-expression :% multiplicative-expression)
 
 (define-reference additive-expression
   addition
   subtraction
   multiplicative-expression)
 
-(define-object addition
-    (and (v multiplicative-expression) :+ (v additive-expression)))
+(define-binary-op addition
+    multiplicative-expression :+ additive-expression)
 
-(define-object subtraction
-    (and (v multiplicative-expression) :- (v additive-expression)))
+(define-binary-op subtraction
+    multiplicative-expression :- additive-expression)
 
 (define-reference shift-expression
   left-shift
   right-shift
   additive-expression)
 
-(define-object left-shift
-    (and (v additive-expression) :<< (v shift-expression)))
+(define-binary-op left-shift
+    additive-expression :<< shift-expression)
 
-(define-object right-shift
-    (and (v additive-expression) :>> (v shift-expression)))
+(define-binary-op right-shift
+    additive-expression :>> shift-expression)
 
 (define-reference relational-expression
   less-than
@@ -247,70 +254,70 @@
   greater-equal-than
   shift-expression)
 
-(define-object less-than
-    (and (v shift-expression) :< (v relational-expression)))
+(define-binary-op less-than
+    shift-expression :< relational-expression)
 
-(define-object greater-than
-    (and (v shift-expression) :> (v relational-expression)))
+(define-binary-op greater-than
+    shift-expression :> relational-expression)
 
-(define-object less-equal-than
-    (and (v shift-expression) :<= (v relational-expression)))
+(define-binary-op less-equal-than
+    shift-expression :<= relational-expression)
 
-(define-object greater-equal-than
-    (and (v shift-expression) :>= (v relational-expression)))
+(define-binary-op greater-equal-than
+    shift-expression :>= relational-expression)
 
 (define-reference equality-expression
   equal
   not-equal
   relational-expression)
 
-(define-object equal
-    (and (v relational-expression) :== (v equality-expression)))
+(define-binary-op equal
+    relational-expression :== equality-expression)
 
-(define-object not-equal
-    (and (v relational-expression) :!= (v equality-expression)))
+(define-binary-op not-equal
+    relational-expression :!= equality-expression)
 
-(define-reference and-expression
+(define-reference bitwise-and-expression
   bitwise-and
   equality-expression)
 
-(define-object bitwise-and
-    (and (v equality-expression) :& (v and-expression)))
+(define-binary-op bitwise-and
+    equality-expression :& bitwise-and)
 
 (define-reference exclusive-or-expression
   exclusive-or
-  and-expression)
+  bitwise-and-expression)
 
-(define-object exclusive-or
-    (and (v and-expression) :^ (v exclusive-or-expression)))
+(define-binary-op exclusive-or
+    bitwise-and :^ exclusive-or)
 
 (define-reference inclusive-or-expression
   inclusive-or
   exclusive-or-expression)
 
-(define-object inclusive-or
-    (and (v exclusive-or-expression) :\| (v inclusive-or-expression)))
+(define-binary-op inclusive-or
+    exclusive-or :\| inclusive-or)
 
 (define-reference logical-and-expression
   logical-and
   inclusive-or-expression)
 
-(define-object logical-and
-    (and (v inclusive-or-expression) :&& (v logical-and-expression)))
+(define-binary-op logical-and
+    inclusive-or :&& logical-and)
 
 (define-reference logical-xor-expression
   logical-xor
   logical-and-expression)
 
-(define-object logical-xor
-    (and (v logical-and-expression) :^^ (v logical-xor-expression)))
+(define-binary-op logical-xor
+  logical-and-expression :^^ logical-xor)
 
 (define-reference logical-or-expression
   logical-or
   logical-xor-expression)
 
-(define-object logical-or
-    (and (v logical-xor-expression) :\|\| (v logical-or-expression)))
+(define-binary-op logical-or
+  logical-xor :\|\| logical-or)
 
 (define-reference conditional-expression
   conditional
