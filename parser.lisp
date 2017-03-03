@@ -99,12 +99,12 @@
   (etypecase rule
     (null)
     (keyword
-     `(when (eq ,rule (peek))
+     `(when (and (not (end-of-stream-p)) (eq ,rule (peek)))
         (consume)))
     (symbol
      `(,(intern (string rule) '#:org.shirakumo.trial.glsl.parser.rules)))
     (character
-     `(when (char= ,rule (peek))
+     `(when (and (not (end-of-stream-p)) (eql ,rule (peek)))
         (consume)))
     (string
      `(consume-string ,rule))
@@ -158,8 +158,8 @@
               `(list* ',name v))))))
 
 (defun newline-p (input)
-  (or (char= input #\Linefeed)
-      (char= input #\Return)))
+  (or (eql input #\Linefeed)
+      (eql input #\Return)))
 
 (defun normalize-shader-source (input)
   (etypecase input
