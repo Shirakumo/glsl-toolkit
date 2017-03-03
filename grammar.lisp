@@ -29,7 +29,8 @@
   (parse-integer (coerce v 'string) :radix 16))
 
 (define-object float-token
-    (and (* (v (any "0123456789"))) (v #\.) (* (v (any "0123456789")))
+      (and (or (and (+ (v (any "0123456789"))) (v #\.) (* (v (any "0123456789"))))
+               (and (* (v (any "0123456789"))) (v #\.) (+ (v (any "0123456789")))))
          (? (when (any "eE") (v (any "+-")) (* (v (any "0123456789")))))
          (v (? (or "f" "F" "lf" "LF") "f")))
   (let ((type (if (string-equal "f" (car (last v)))
@@ -42,38 +43,39 @@
   (coerce v 'string))
 
 (define-object keyword-token
-    (v (or "writeonly" "while" "volatile" "void" "vec4" "vec3" "vec2" "varying" "uvec4"
-           "uvec3" "uvec2" "using" "usamplerCubeArray" "usamplerCube" "usamplerBuffer"
-           "usampler3D" "usampler2DRect" "usampler2DMSArray" "usampler2DMS"
-           "usampler2DArray" "usampler2D" "usampler1DArray" "usampler1D" "unsigned"
-           "union" "uniform" "uint" "uimageCubeArray" "uimageCube" "uimageBuffer"
-           "uimage3D" "uimage2DRect" "uimage2DMSArray" "uimage2DMS" "uimage2DArray"
-           "uimage2D" "uimage1DArray" "uimage1D" "typedef" "true" "this" "template"
-           "switch" "superp" "subroutine" "struct" "static" "smooth"
-           "smapler2DRectShadow" "sizeof" "short" "shared" "samplerCubeShadow"
-           "samplerCubeArrayShadow" "samplerCubeArray" "samplerCube" "samplerBuffer"
-           "sampler3DRect" "sampler3D" "sampler2DShadow" "sampler2DRect"
-           "sampler2DMSArray" "sampler2DMS" "sampler2DArrayShadow" "sampler2DArray"
-           "sampler2D" "sampler1DShadow" "sampler1DArrayShadow" "sampler1DArray"
-           "sampler1D" "sample" "return" "restrict" "resource" "readonly" "public"
-           "precision" "precise" "patch" "partition" "out" "otput" "notinline"
-           "noperspective" "namespace" "mediump" "mat4x4" "mat4x3" "mat4x2" "mat4"
-           "mat3x4" "mat3x3" "mat3x2" "mat3" "mat2x4" "mat2x3" "mat2x2" "mat2" "lowp"
-           "long" "layout" "ivec4" "ivec3" "ivec2" "isamplerCubeArray" "isamplerCube"
-           "isamplerBuffer" "isampler3D" "isampler2DRect" "isampler2DMSArray"
-           "isampler2DMS" "isampler2DArray" "isampler2D" "isampler1DArray" "isampler1D"
-           "invariant" "interface" "int" "input" "inout" "inline" "in" "imageCubeArray"
-           "imageCube" "imageBuffer" "image3D" "image2DRect" "image2DMSArray" "image2DMS"
-           "image2DArray" "image2D" "image1DArray" "image1D" "iimageCubeArray"
-           "iimageCube" "iimageBuffer" "iimage3D" "iimage2DRect" "iimage2DMSArray"
-           "iimage2DMS" "iimage2DArray" "iimage2D" "iimage1DArray" "iimage1D" "if"
-           "hvec4" "hvec3" "hvec2" "highp" "half" "goto" "fvec4" "fvec3" "fvec2" "for"
-           "float" "flat" "fixed" "filter" "false" "external" "extern" "enum" "else"
-           "dvec4" "dvec3" "dvec2" "double" "do" "dmat4x4" "dmat4x3" "dmat4x2" "dmat4"
-           "dmat3x4" "dmat3x3" "dmat3x2" "dmat3" "dmat2x4" "dmat2x3" "dmat2x2" "dmat2"
-           "discard" "default" "continue" "cont" "common" "coherent" "class" "centroid"
-           "cast" "case" "bvec4" "bvec3" "bvec2" "buffer" "break" "bool" "attribute"
-           "atomic_uint" "asm" "active"))
+      (and (v (or "writeonly" "while" "volatile" "void" "vec4" "vec3" "vec2" "varying" "uvec4"
+                  "uvec3" "uvec2" "using" "usamplerCubeArray" "usamplerCube" "usamplerBuffer"
+                  "usampler3D" "usampler2DRect" "usampler2DMSArray" "usampler2DMS"
+                  "usampler2DArray" "usampler2D" "usampler1DArray" "usampler1D" "unsigned"
+                  "union" "uniform" "uint" "uimageCubeArray" "uimageCube" "uimageBuffer"
+                  "uimage3D" "uimage2DRect" "uimage2DMSArray" "uimage2DMS" "uimage2DArray"
+                  "uimage2D" "uimage1DArray" "uimage1D" "typedef" "true" "this" "template"
+                  "switch" "superp" "subroutine" "struct" "static" "smooth"
+                  "smapler2DRectShadow" "sizeof" "short" "shared" "samplerCubeShadow"
+                  "samplerCubeArrayShadow" "samplerCubeArray" "samplerCube" "samplerBuffer"
+                  "sampler3DRect" "sampler3D" "sampler2DShadow" "sampler2DRect"
+                  "sampler2DMSArray" "sampler2DMS" "sampler2DArrayShadow" "sampler2DArray"
+                  "sampler2D" "sampler1DShadow" "sampler1DArrayShadow" "sampler1DArray"
+                  "sampler1D" "sample" "return" "restrict" "resource" "readonly" "public"
+                  "precision" "precise" "patch" "partition" "out" "otput" "notinline"
+                  "noperspective" "namespace" "mediump" "mat4x4" "mat4x3" "mat4x2" "mat4"
+                  "mat3x4" "mat3x3" "mat3x2" "mat3" "mat2x4" "mat2x3" "mat2x2" "mat2" "lowp"
+                  "long" "layout" "ivec4" "ivec3" "ivec2" "isamplerCubeArray" "isamplerCube"
+                  "isamplerBuffer" "isampler3D" "isampler2DRect" "isampler2DMSArray"
+                  "isampler2DMS" "isampler2DArray" "isampler2D" "isampler1DArray" "isampler1D"
+                  "invariant" "interface" "int" "input" "inout" "inline" "in" "imageCubeArray"
+                  "imageCube" "imageBuffer" "image3D" "image2DRect" "image2DMSArray" "image2DMS"
+                  "image2DArray" "image2D" "image1DArray" "image1D" "iimageCubeArray"
+                  "iimageCube" "iimageBuffer" "iimage3D" "iimage2DRect" "iimage2DMSArray"
+                  "iimage2DMS" "iimage2DArray" "iimage2D" "iimage1DArray" "iimage1D" "if"
+                  "hvec4" "hvec3" "hvec2" "highp" "half" "goto" "fvec4" "fvec3" "fvec2" "for"
+                  "float" "flat" "fixed" "filter" "false" "external" "extern" "enum" "else"
+                  "dvec4" "dvec3" "dvec2" "double" "do" "dmat4x4" "dmat4x3" "dmat4x2" "dmat4"
+                  "dmat3x4" "dmat3x3" "dmat3x2" "dmat3" "dmat2x4" "dmat2x3" "dmat2x2" "dmat2"
+                  "discard" "default" "continue" "cont" "common" "coherent" "class" "centroid"
+                  "cast" "case" "bvec4" "bvec3" "bvec2" "buffer" "break" "bool" "attribute"
+                  "atomic_uint" "asm" "active"))
+           (! (or whitespace operator)))
   (intern (string-upcase (first v)) :keyword))
 
 (define-object preprocessor-token
@@ -208,7 +210,7 @@
   multiplication
   division
   modulus
-  unary-expression)
+  )
 
 (defmacro define-binary-op (name left op right)
   `(define-object ,name
@@ -218,104 +220,58 @@
          (first v))))
 
 (define-binary-op multiplication
-    unary-expression :* multiplicative-expression)
+    unary-expression :* multiplication)
 
 (define-binary-op division
-    unary-expression :/ multiplicative-expression)
+    multiplication :/ division)
 
 (define-binary-op modulus
-    unary-expression :% multiplicative-expression)
-
-(define-reference additive-expression
-  addition
-  subtraction
-  multiplicative-expression)
+    division :% modulus)
 
 (define-binary-op addition
-    multiplicative-expression :+ additive-expression)
+    modulus :+ addition)
 
 (define-binary-op subtraction
-    multiplicative-expression :- additive-expression)
-
-(define-reference shift-expression
-  left-shift
-  right-shift
-  additive-expression)
+    addition :- subtraction)
 
 (define-binary-op left-shift
-    additive-expression :<< shift-expression)
+    subtraction :<< left-shift)
 
 (define-binary-op right-shift
-    additive-expression :>> shift-expression)
-
-(define-reference relational-expression
-  less-than
-  greater-than
-  less-equal-than
-  greater-equal-than
-  shift-expression)
+    left-shift :>> right-shift)
 
 (define-binary-op less-than
-    shift-expression :< relational-expression)
+    right-shift :< less-than)
 
 (define-binary-op greater-than
-    shift-expression :> relational-expression)
+    less-than :> greater-than)
 
 (define-binary-op less-equal-than
-    shift-expression :<= relational-expression)
+    greater-than :<= less-equal-than)
 
 (define-binary-op greater-equal-than
-    shift-expression :>= relational-expression)
-
-(define-reference equality-expression
-  equal
-  not-equal
-  relational-expression)
+    less-equal-than :>= greater-equal-than)
 
 (define-binary-op equal
-    relational-expression :== equality-expression)
+    greater-equal-than :== equal)
 
 (define-binary-op not-equal
-    relational-expression :!= equality-expression)
-
-(define-reference bitwise-and-expression
-  bitwise-and
-  equality-expression)
+    equal :!= not-equal)
 
 (define-binary-op bitwise-and
-    equality-expression :& bitwise-and)
-
-(define-reference exclusive-or-expression
-  exclusive-or
-  bitwise-and-expression)
+    not-equal :& bitwise-and)
 
 (define-binary-op exclusive-or
     bitwise-and :^ exclusive-or)
 
-(define-reference inclusive-or-expression
-  inclusive-or
-  exclusive-or-expression)
-
 (define-binary-op inclusive-or
     exclusive-or :\| inclusive-or)
-
-(define-reference logical-and-expression
-  logical-and
-  inclusive-or-expression)
 
 (define-binary-op logical-and
     inclusive-or :&& logical-and)
 
-(define-reference logical-xor-expression
-  logical-xor
-  logical-and-expression)
-
 (define-binary-op logical-xor
   logical-and-expression :^^ logical-xor)
-
-(define-reference logical-or-expression
-  logical-or
-  logical-xor-expression)
 
 (define-binary-op logical-or
   logical-xor :\|\| logical-or)

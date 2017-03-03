@@ -126,6 +126,11 @@
                  finally (return T)))
        (+ (compile-rule `(and ,(second rule) (* ,(second rule)))))
        (? `(or ,(compile-rule (second rule)) ,(or (third rule) `',*no-value*)))
+       (! `(let ((index *token-index*)
+                 (preval v))
+             (prog1 ,(compile-rule (second rule))
+               (setf *token-index* index
+                     v preval))))
        (T rule)))))
 
 (defmacro define-rule (name &body body)
