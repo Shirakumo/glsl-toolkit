@@ -137,7 +137,8 @@
   float-constant
   boolean-constant
   (and :\( (v expression) :\))
-  variable-identifier)
+  variable-identifier
+  basic-type)
 
 (define-reference postfix-expression
   modified-reference
