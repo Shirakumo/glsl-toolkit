@@ -120,7 +120,7 @@
 
 (define-object boolean-constant
     (v (or :true :false))
-  v)
+  (first v))
 
 (define-object identifier
     (stringp (peek))
@@ -131,15 +131,12 @@
          (stringp (second (peek))))
   (consume))
 
-(define-object variable-identifier
-    (v identifier))
-
 (define-reference primary-expression
   integer-constant
   float-constant
   boolean-constant
   (and :\( (v expression) :\))
-  variable-identifier
+  identifier
   basic-type)
 
 (define-reference postfix-expression
@@ -209,8 +206,7 @@
 (define-reference multiplicative-expression
   multiplication
   division
-  modulus
-  )
+  modulus)
 
 (defmacro define-binary-op (name left op right)
   `(define-object ,name
@@ -271,17 +267,17 @@
     inclusive-or :&& logical-and)
 
 (define-binary-op logical-xor
-  logical-and-expression :^^ logical-xor)
+  logical-and :^^ logical-xor)
 
 (define-binary-op logical-or
   logical-xor :\|\| logical-or)
 
 (define-reference conditional-expression
   conditional
-  logical-or-expression)
+  logical-or)
 
 (define-object conditional
-    (and (v logical-or-expression) :? (v expression) :\: (v assignment-expression)))
+    (and (v logical-or) :? (v expression) :\: (v assignment-expression)))
 
 (define-reference assignment-expression
   assignment
@@ -292,8 +288,12 @@
          (v (or := :*= :/= :%= :+= :-= :<= :>= :&= :^= :\|=))
          (v assignment-expression)))
 
-(define-object expression
-    (and (v assignment-expression (* (and :\, (v assignment-expression))))))
+(define-reference expression
+  assignment-expression
+  multiple-expressions)
+
+(define-object multiple-expressions
+    (and (v assignment-expression (+ (and :\, (v assignment-expression))))))
 
 (define-reference constant-expression
   conditional-expression)
@@ -306,27 +306,23 @@
        :\;))
 
 (define-object function-prototype
-    (and (v fully-specified-type) (v identifier) (v function-prototype-parameters)))
-
-(define-object function-prototype-parameters
-    (and :\( (? (v parameter-declaration)) (* (and :\, (v parameter-declaration))) :\)))
+    (and (? (v type-qualifier)) (v type-specifier) (v identifier)
+         :\( (? (v parameter-declaration)) (* (and :\, (v parameter-declaration))) :\)))
 
 (define-object parameter-declaration
-    (and (v (? type-qualifier)) (v type-specifier)
-         (v (? identifier)) (? (v array-specifier))))
+    (and (? (v type-qualifier)) (v type-specifier)
+         (? (v identifier)) (? (v array-specifier))))
 
 (define-object precision-declarator
     (and :precision (v (or :highp :mediump :lowp)) (v type-specifier)))
 
 (define-object variable-declaration
-    (and (v fully-specified-type) (v variable-initializer)
+    (and (? (v type-qualifier)) (v type-specifier) (v variable-initializer)
          (* (and :\, (v variable-initializer)))))
 
 (define-object variable-initializer
-    (and (v identifier) (v (? array-specifier)) (? (and := (v initializer)))))
-
-(define-object fully-specified-type
-    (and (v (? type-qualifier)) (v type-specifier)))
+    (and (v identifier) (? (v array-specifier)) (? (v (and := initializer))))
+  v)
 
 (define-reference invariant-qualifier
   :invariant)
@@ -438,18 +434,21 @@
   :usamplerCubeArray :uimageCubeArray)
 
 (define-object struct-specifier
-    (and :struct (v (? identifier)) :\{ (+ (v struct-declaration)) :\}))
+    (and :struct (? (v identifier)) :\{ (+ (v struct-declaration)) :\}))
 
 (define-object struct-declaration
-    (and (v (? type-qualifier)) (v type-specifier)
+    (and (? (v type-qualifier)) (v type-specifier)
          (v struct-declarator) (* (and :\, (v struct-declarator))) :\;))
 
 (define-object struct-declarator
     (and (v identifier) (? (v array-specifier))))
 
-(define-object initializer
-    (or (v assignment-expression)
-        (and :\{ (v initializer) (* (and :\, (v initializer))) (? :\,) :\})))
+(define-reference initializer
+  array-initializer
+  assignment-expression)
+
+(define-object array-initializer
+    (and :\{ (v initializer) (* (and :\, (v initializer))) (? :\,) :\}))
 
 (define-reference statement
   simple-statement
@@ -480,7 +479,8 @@
   condition-declarator)
 
 (define-object condition-declarator
-    (and (v fully-specified-type) (v identifier) := (v initializer)))
+    (and (? (v type-qualifier)) (v type-specifier)
+         (v identifier) := (v initializer)))
 
 (define-object switch-statement
     (and :switch :\( (v expression) :\)
