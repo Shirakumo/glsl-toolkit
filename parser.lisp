@@ -168,6 +168,8 @@
 
 (defun normalize-shader-source (input)
   (etypecase input
+    (pathname (with-open-file (stream input :direction :input)
+                (normalize-shader-source stream)))
     (string (with-input-from-string (stream input)
               (normalize-shader-source stream)))
     (stream
@@ -218,10 +220,10 @@
 
 (defun parse (input &optional (toplevel-rule 'shader))
   (etypecase input
+    ((or string stream pathname)
+     (parse (lex input) toplevel-rule))
     (list
      (parse (coerce input 'vector) toplevel-rule))
-    (string
-     (parse (lex input) toplevel-rule))
     (vector
      (with-token-input input
        (funcall (rule toplevel-rule))))))
