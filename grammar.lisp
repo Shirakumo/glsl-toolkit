@@ -14,7 +14,7 @@
     (and (v (or decimal-token
                 hexadecimal-token
                 octal-token))
-         (? (v (any "uU")))))
+         (v (? (any "uU") "s"))))
 
 (define-object decimal-token
     (or (and (v (any "123456789")) (* (v (any "0123456789")))))
@@ -112,7 +112,11 @@
 (define-object integer-constant
     (and (consp (peek))
          (integerp (second (peek))))
-  (consume))
+  (destructuring-bind (type int sign) (consume)
+    (declare (ignore type))
+    (if (string= "s" sign)
+        int
+        `(unsigned-int ,int))))
 
 (define-object float-constant
     (floatp (peek))
@@ -299,26 +303,30 @@
   conditional-expression)
 
 (define-reference declaration
-  (and (v (or function-prototype
-              variable-declaration
-              precision-declarator
-              struct-declaration))
-       :\;))
+  (or function-declaration
+      variable-declaration
+      precision-declarator
+      struct-declaration))
+
+(define-object function-declaration
+    (and (v function-prototype) :\;))
 
 (define-object function-prototype
-    (and (? (v type-qualifier)) (v type-specifier) (v identifier)
+    (and (v (? type-qualifier)) (v type-specifier) (v identifier)
          :\( (? (v parameter-declaration)) (* (and :\, (v parameter-declaration))) :\)))
 
 (define-object parameter-declaration
     (and (? (v type-qualifier)) (v type-specifier)
-         (? (v identifier)) (? (v array-specifier))))
+         (? (v identifier)) (? (v array-specifier)))
+  v)
 
 (define-object precision-declarator
-    (and :precision (v (or :highp :mediump :lowp)) (v type-specifier)))
+    (and :precision (v (or :highp :mediump :lowp)) (v type-specifier) :\;))
 
 (define-object variable-declaration
-    (and (? (v type-qualifier)) (v type-specifier) (v variable-initializer)
-         (* (and :\, (v variable-initializer)))))
+    (and (v (? type-qualifier)) (v type-specifier)
+         (v variable-initializer) (* (and :\, (v variable-initializer)))
+         :\;))
 
 (define-object variable-initializer
     (and (v identifier) (? (v array-specifier)) (? (v (and := initializer))))
@@ -434,14 +442,15 @@
         :usamplerCubeArray :uimageCubeArray)))
 
 (define-object struct-specifier
-    (and :struct (? (v identifier)) :\{ (+ (v struct-declaration)) :\}))
+    (and :struct (v (? identifier)) :\{ (+ (v struct-declaration)) :\}))
 
 (define-object struct-declaration
-    (and (? (v type-qualifier)) (v type-specifier)
+    (and (v (? type-qualifier)) (v type-specifier)
          (v struct-declarator) (* (and :\, (v struct-declarator))) :\;))
 
 (define-object struct-declarator
-    (and (v identifier) (? (v array-specifier))))
+    (and (v identifier) (? (v array-specifier)))
+  v)
 
 (define-reference initializer
   array-initializer
@@ -479,7 +488,7 @@
   condition-declarator)
 
 (define-object condition-declarator
-    (and (? (v type-qualifier)) (v type-specifier)
+    (and (v (? type-qualifier)) (v type-specifier)
          (v identifier) := (v initializer)))
 
 (define-object switch-statement
