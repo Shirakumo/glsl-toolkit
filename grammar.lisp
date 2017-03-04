@@ -325,10 +325,10 @@
   v)
 
 (define-reference invariant-qualifier
-  :invariant)
+  (any (:invariant)))
 
 (define-reference interpolation-qualifier
-  :smooth :flat :noperspective)
+  (any (:smooth :flat :noperspective)))
 
 (define-object layout-qualifier
     (and :layout :\( (v layout-qualifier-id) (* (and :\, (v layout-qualifier-id))) :\)))
@@ -350,15 +350,15 @@
               precise-qualifier))))
 
 (define-reference storage-qualifier
-  :const :inout :in :out :centroid :patch :sample
-  :uniform :buffer :shared :coherent :volatile
-  :restrict :readonly :writeonly)
+  (any (:const :inout :in :out :centroid :patch :sample
+        :uniform :buffer :shared :coherent :volatile
+        :restrict :readonly :writeonly)))
 
 (define-object subroutine-qualifier
     (and :subroutine (? (and :\( (v type-name) :\)))))
 
 (define-reference precision-qualifier
-  :highp :mediump :lowp)
+  (any (:highp :mediump :lowp)))
 
 (define-object type-specifier
     (and (v type-specifier-nonarray) (? (v array-specifier))))
@@ -375,63 +375,63 @@
     (v identifier))
 
 (define-reference basic-type
-  ;; Transparent Types
-  :void :bool :int :uint :float :double
-  :vec2 :vec3 :vec4
-  :dvec2 :dvec3 :dvec4 :bvec2 :bvec3 :bvec4
-  :ivec2 :ivec3 :ivec4 :uvec2 :uvec3 :uvec4
-  :mat2 :mat3 :mat4
-  :mat2x2 :mat2x3 :mat2x4
-  :mat3x2 :mat3x3 :mat3x4
-  :mat4x2 :mat4x3 :mat4x4
-  :dmat2 :dmat3 :dmat4
-  :dmat2x2 :dmat2x3 :dmat2x4
-  :dmat3x2 :dmat3x3 :dmat3x4
-  :dmat4x2 :dmat4x3 :dmat4x4
-  ;; Floating-Point Opaque Types
-  :sampler1D :image1D
-  :sampler2D :image2D
-  :sampler3D :image3D
-  :samplerCube :imageCube
-  :sampler2DRect :image2DRect
-  :sampler1DArray :image1DArray
-  :sampler2DArray :image2DArray
-  :samplerBuffer :imageBuffer
-  :sampler2DMS :image2DMS
-  :sampler2DMSArray :image2DMSArray
-  :samplerCubeArray :imageCubeArray
-  :sampler1DShadow
-  :sampler2DShadow
-  :smapler2DRectShadow
-  :sampler1DArrayShadow
-  :sampler2DArrayShadow
-  :samplerCubeShadow
-  :samplerCubeArrayShadow
-  ;; Signed Integer Opaque Types
-  :isampler1D :iimage1D
-  :isampler2D :iimage2D
-  :isampler3D :iimage3D
-  :isamplerCube :iimageCube
-  :isampler2DRect :iimage2DRect
-  :isampler1DArray :iimage1DArray
-  :isampler2DArray :iimage2DArray
-  :isamplerBuffer :iimageBuffer
-  :isampler2DMS :iimage2DMS
-  :isampler2DMSArray :iimage2DMSArray
-  :isamplerCubeArray :iimageCubeArray
-  ;; Unsigned Integer Opaque Types
-  :atomic_uint
-  :usampler1D :uimage1D
-  :usampler2D :uimage2D
-  :usampler3D :uimage3D
-  :usamplerCube :uimageCube
-  :usampler2DRect :uimage2DRect
-  :usampler1DArray :uimage1DArray
-  :usampler2DArray :uimage2DArray
-  :usamplerBuffer :uimageBuffer
-  :usampler2DMS :uimage2DMS
-  :usampler2DMSArray :uimage2DMSArray
-  :usamplerCubeArray :uimageCubeArray)
+  (any (;; Transparent Types
+        :void :bool :int :uint :float :double
+        :vec2 :vec3 :vec4
+        :dvec2 :dvec3 :dvec4 :bvec2 :bvec3 :bvec4
+        :ivec2 :ivec3 :ivec4 :uvec2 :uvec3 :uvec4
+        :mat2 :mat3 :mat4
+        :mat2x2 :mat2x3 :mat2x4
+        :mat3x2 :mat3x3 :mat3x4
+        :mat4x2 :mat4x3 :mat4x4
+        :dmat2 :dmat3 :dmat4
+        :dmat2x2 :dmat2x3 :dmat2x4
+        :dmat3x2 :dmat3x3 :dmat3x4
+        :dmat4x2 :dmat4x3 :dmat4x4
+        ;; Floating-Point Opaque Types
+        :sampler1D :image1D
+        :sampler2D :image2D
+        :sampler3D :image3D
+        :samplerCube :imageCube
+        :sampler2DRect :image2DRect
+        :sampler1DArray :image1DArray
+        :sampler2DArray :image2DArray
+        :samplerBuffer :imageBuffer
+        :sampler2DMS :image2DMS
+        :sampler2DMSArray :image2DMSArray
+        :samplerCubeArray :imageCubeArray
+        :sampler1DShadow
+        :sampler2DShadow
+        :smapler2DRectShadow
+        :sampler1DArrayShadow
+        :sampler2DArrayShadow
+        :samplerCubeShadow
+        :samplerCubeArrayShadow
+        ;; Signed Integer Opaque Types
+        :isampler1D :iimage1D
+        :isampler2D :iimage2D
+        :isampler3D :iimage3D
+        :isamplerCube :iimageCube
+        :isampler2DRect :iimage2DRect
+        :isampler1DArray :iimage1DArray
+        :isampler2DArray :iimage2DArray
+        :isamplerBuffer :iimageBuffer
+        :isampler2DMS :iimage2DMS
+        :isampler2DMSArray :iimage2DMSArray
+        :isamplerCubeArray :iimageCubeArray
+        ;; Unsigned Integer Opaque Types
+        :atomic_uint
+        :usampler1D :uimage1D
+        :usampler2D :uimage2D
+        :usampler3D :uimage3D
+        :usamplerCube :uimageCube
+        :usampler2DRect :uimage2DRect
+        :usampler1DArray :uimage1DArray
+        :usampler2DArray :uimage2DArray
+        :usamplerBuffer :uimageBuffer
+        :usampler2DMS :uimage2DMS
+        :usampler2DMSArray :uimage2DMSArray
+        :usamplerCubeArray :uimageCubeArray)))
 
 (define-object struct-specifier
     (and :struct (? (v identifier)) :\{ (+ (v struct-declaration)) :\}))
