@@ -16,6 +16,8 @@
   :components ((:file "package")
                (:file "parser")
                (:file "grammar")
+               (:file "printer")
                (:file "documentation"))
   :depends-on (:documentation-utils
-               :parse-float))
+               :parse-float
+               :trivial-indent))
