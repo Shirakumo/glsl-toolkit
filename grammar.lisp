@@ -80,7 +80,7 @@
 
 (define-object preprocessor-token
     (and (v #\#) (* (v (notany (#\Newline)))))
-  (list 'org.shirakumo.trial.glsl.parser.rules::preprocessor-directive (coerce v 'string)))
+  (list 'preprocessor-directive (coerce v 'string)))
 
 (defmacro define-operator-structs (&body names)
   `(progn
@@ -329,7 +329,7 @@
          :\;))
 
 (define-object variable-initializer
-    (and (v identifier) (? (v array-specifier)) (? (v (and := initializer))))
+    (and (v identifier) (v (? array-specifier)) (? (v (and := initializer))))
   v)
 
 (define-reference invariant-qualifier

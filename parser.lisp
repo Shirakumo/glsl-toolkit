@@ -8,7 +8,11 @@
 
 (defvar *token-array* "")
 (defvar *token-index* 0)
-(defvar *no-value* (make-symbol "NO-VALUE"))
+
+(macrolet ((define-novalue ()
+             (let ((name 'no-value))
+               `(define-symbol-macro ,name ',name))))
+  (define-novalue))
 
 (deftype index ()
   `(integer 0 ,array-dimension-limit))
@@ -125,7 +129,7 @@
                  while ,(compile-rule (second rule))
                  finally (return T)))
        (+ (compile-rule `(and ,(second rule) (* ,(second rule)))))
-       (? `(or ,(compile-rule (second rule)) ,(or (third rule) `',*no-value*)))
+       (? `(or ,(compile-rule (second rule)) ,(or (third rule) no-value)))
        (! `(let ((index *token-index*)
                  (preval v))
              (prog1 ,(compile-rule (second rule))
