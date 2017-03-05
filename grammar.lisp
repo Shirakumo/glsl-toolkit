@@ -541,4 +541,5 @@
     (and (v function-prototype) (v compound-statement)))
 
 (define-object shader
-    (* (v (or function-definition declaration preprocessor-directive))))
+    (* (or (v (or function-definition declaration preprocessor-directive))
+           #\;)))
