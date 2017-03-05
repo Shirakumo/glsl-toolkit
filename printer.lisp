@@ -68,6 +68,9 @@
 
 (trivial-indent:define-indentation with-object-case (4 &rest (&whole 2 2 4 &rest 1)))
 
+(defun preprocessor-p (thing)
+  (and (consp thing) (eql (first thing) 'preprocessor-directive)))
+
 (defun serialize-part (part)
   (etypecase part
     (integer
@@ -120,7 +123,7 @@
         (serialize-part int)
         (sformat "u"))
        (preprocessor-directive (directive)
-        (sformat "~a" directive))
+        (sformat "~&~a~%" directive))
        (modified-reference (expression &rest modifiers)
         (sformat "~o~{~o~}" expression modifiers))
        (field-modifier (identifier)
@@ -225,7 +228,10 @@
         (sformat "{")
         (with-indentation ()
           (dolist (statement statements)
-            (indent) (sformat "~o;" statement)))
+            (cond ((preprocessor-p statement)
+                   (sformat "~o" statement))
+                  (T
+                   (indent) (sformat "~o;" statement)))))
         (indent) (sformat "}"))
        (selection-statement (expression statement &optional else)
         (sformat "if(~o)~o~@[else~o~]" expression statement else))
@@ -234,7 +240,6 @@
        (switch-statement (expression statement)
         (sformat "switch(~o)~o" expression statement))
        (case-label (case)
-        (indent)
         (if (eql :default case)
             (sformat "default: ")
             (sformat "case ~o: " case)))
@@ -257,5 +262,9 @@
         (sformat "~%~o~o" prototype statement))
        (shader (&rest items)
         (dolist (item items)
-          (indent) (serialize-part item)
-          (sformat ";")))))))
+          (cond ((preprocessor-p item)
+                 (serialize-part item))
+                (T
+                 (indent)
+                 (serialize-part item)
+                 (sformat ";")))))))))
