@@ -475,13 +475,15 @@
   :\;)
 
 (define-object compound-statement
-    (and :\{ (* (v statement)) :\}))
+    (or (and :\{ (* (v statement)) :\})
+        (v simple-statement)))
 
 (define-reference expression-statement
   (and (v expression) :\;))
 
 (define-object selection-statement
-    (and :if :\( (v expression) :\) (v statement) (? (and :else (v statement)))))
+    (and :if :\( (v expression) :\) (v compound-statement)
+         (? (and :else (v compound-statement)))))
 
 (define-reference condition
   expression
@@ -493,7 +495,7 @@
 
 (define-object switch-statement
     (and :switch :\( (v expression) :\)
-         :\{ (* (v statement)) :\}))
+         (v compound-statement)))
 
 (define-object case-label
     (or (and :case (v expression) :\:)
@@ -505,17 +507,17 @@
   for-statement)
 
 (define-object while-statement
-    (and :while :\( (v condition) :\) (v statement)))
+    (and :while :\( (v condition) :\) (v compound-statement)))
 
 (define-object do-statement
-    (and :do (v statement) :while :\( (v expression) :\) :\;))
+    (and :do (v compound-statement) :while :\( (v expression) :\) :\;))
 
 (define-object for-statement
     (and :for :\(
          (v (or expression-statement declaration))
          (v (? condition)) :\;
          (v (? expression)) :\)
-         (v statement)))
+         (v compound-statement)))
 
 (define-reference jump-statement
   continue
