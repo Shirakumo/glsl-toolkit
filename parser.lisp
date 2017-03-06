@@ -151,7 +151,7 @@
     `(define-rule ,name
        (flet ((v (value)
                 (when value (setf v value))))
-         (declare (ignorable #'v))
+         (declare (ignorable #'v) (inline v))
          (let ((,val ,(compile-rule `(or ,@rules))))
            (or v ,val))))))
 
@@ -159,7 +159,7 @@
   `(define-rule ,name
      (flet ((v (value)
               (when value (push value v) value)))
-       (declare (ignorable #'v))
+       (declare (ignorable #'v) (inline v))
        (when ,(compile-rule rule)
          (setf v (nreverse v))
          ,(if transform
