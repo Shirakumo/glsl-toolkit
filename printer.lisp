@@ -58,16 +58,6 @@
                      (T
                       (write-char (char string i) out)))))))
 
-(defmacro with-object-case (object &body cases)
-  (let ((o (gensym "O")))
-    `(let ((,o ,object))
-       (ecase (first ,o)
-         ,@(loop for (type args . body) in cases
-                 collect `(,type (destructuring-bind ,args (rest ,o)
-                                   ,@body)))))))
-
-(trivial-indent:define-indentation with-object-case (4 &rest (&whole 2 2 4 &rest 1)))
-
 (defun preprocessor-p (thing)
   (and (consp thing) (eql (first thing) 'preprocessor-directive)))
 
@@ -218,10 +208,12 @@
         (sformat "~:[[]~;~:*~{[~o]~}~]" specifiers))
        (type-name (identifier)
         (sformat "~o" identifier))
-       (struct-specifier (identifier &rest declarations)
-        (sformat "struct ~o{~{~o~}}" identifier declarations))
-       (struct-declaration (qualifier specifier &rest declarators)
-        (sformat "~o~o~{~{~o~^ ~}~^, ~};" qualifier specifier declarators))
+       (struct-specifier (identifier)
+        (sformat "struct ~o" identifier))
+       (struct-declaration (identifier &rest declarators)
+        (sformat "struct ~o{~{~o~}}" identifier declarators))
+       (struct-declarator (qualifier specifier &rest fields)
+        (sformat "~o~o~{~{~o~^ ~}~^, ~};" qualifier specifier fields))
        (array-initializer (initializer &rest initializers)
         (sformat "{~o~{, ~o~}}" initializer initializers))
        (compound-statement (&rest statements)

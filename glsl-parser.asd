@@ -14,6 +14,7 @@
   :homepage "https://github.com/Shinmera/glsl-parser"
   :serial T
   :components ((:file "package")
+               (:file "toolkit")
                (:file "parser")
                (:file "grammar")
                (:file "printer")
