@@ -15,3 +15,14 @@
                                    ,@body)))))))
 
 (trivial-indent:define-indentation with-object-case (4 &rest (&whole 2 (&whole 1 &rest 1) 4 &rest 1)))
+
+(defmacro with-restructuring-case (object &body cases)
+  (let ((o (gensym "O")))
+    `(let ((,o ,object))
+       (with-object-case ,o
+         ,@(loop for (type args . body) in cases
+                 collect `(,type ,args
+                                 (list* (car ,o)
+                                        ,@body)))))))
+
+(trivial-indent:define-indentation with-restructuring-case (4 &rest (&whole 2 (&whole 1 &rest 1) 4 &rest 1)))
