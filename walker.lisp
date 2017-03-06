@@ -53,8 +53,12 @@
 (defun statement-p (value environment)
   )
 
-(defun global-p (value environment)
+(defun global-variable-p (value environment)
   (not (null (binding value (root environment)))))
+
+(defun local-variable-p (value environment)
+  (not (eql (binding value environment)
+            (binding value (root environment)))))
 
 (defun control-flow-p (value environment)
   (declare (ignore environment))
