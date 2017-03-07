@@ -75,13 +75,16 @@
                              discard))))
 
 (defun walk (ast function &optional (environment (make-environment)))
-  (flet ((walk (ast &optional (environment environment))
-           (walk ast function environment)))
+  (walk-inner ast ast function environment))
+
+(defun walk-inner (ast context function environment)
+  (flet ((walk (node &optional (environment environment))
+           (walk-inner node ast function environment)))
     (etypecase ast
       ((or integer float keyword string null (eql #.no-value))
-       (funcall function ast environment))
+       (funcall function ast context environment))
       (cons
-       (with-restructuring-case (funcall function ast environment)
+       (with-restructuring-case (funcall function ast context environment)
          (unsigned-int (int)
           int
           NIL)
