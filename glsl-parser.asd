@@ -18,6 +18,8 @@
                (:file "parser")
                (:file "grammar")
                (:file "printer")
+               (:file "walker")
+               (:file "merge")
                (:file "documentation"))
   :depends-on (:documentation-utils
                :parse-float

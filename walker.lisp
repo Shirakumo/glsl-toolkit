@@ -24,9 +24,11 @@
            (setf (root environment) (root parent))
            (loop for k being the hash-keys of (bindings parent)
                  for v being the hash-values of (bindings parent)
-                 do (setf (gethash k (bindings environment)) v)))
+                 do (setf (binding k environment) v)))
           (T
-           (setf (root environment) environment)))
+           (setf (root environment) environment)
+           ;; FIXME: inject standard function and variable defs
+           ))
     environment))
 
 (defun constant-p (value environment)
