@@ -53,10 +53,10 @@
 (defun statement-p (value environment)
   )
 
-(defun global-variable-p (value environment)
+(defun global-identifier-p (value environment)
   (not (null (binding value (root environment)))))
 
-(defun local-variable-p (value environment)
+(defun local-identifier-p (value environment)
   (not (eql (binding value environment)
             (binding value (root environment)))))
 
