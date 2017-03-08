@@ -31,3 +31,6 @@
   (loop for item in list
         for result = (funcall function item)
         when result collect result))
+
+(defun find-any (choices sequence)
+  (find choices sequence :test (lambda (a b) (find b a))))

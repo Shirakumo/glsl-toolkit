@@ -333,7 +333,7 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
   v)
 
 (define-reference invariant-qualifier
-  (any (:invariant)))
+  :invariant)
 
 (define-reference interpolation-qualifier
   (any (:smooth :flat :noperspective)))
@@ -348,15 +348,6 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
 (define-reference precise-qualifier
   :precise)
 
-(define-object type-qualifier
-      (+ (v (or storage-qualifier
-                subroutine-qualifier
-                layout-qualifier
-                precision-qualifier
-                interpolation-qualifier
-                invariant-qualifier
-                precise-qualifier))))
-
 (define-reference storage-qualifier
   (any (:const :inout :in :out :centroid :patch :sample
                :uniform :buffer :shared :coherent :volatile
@@ -367,6 +358,15 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
 
 (define-reference precision-qualifier
   (any (:highp :mediump :lowp)))
+
+(define-object type-qualifier
+    (+ (v (or storage-qualifier
+              subroutine-qualifier
+              layout-qualifier
+              precision-qualifier
+              interpolation-qualifier
+              invariant-qualifier
+              precise-qualifier))))
 
 (define-object type-specifier
       (and (v type-specifier-nonarray) (? (v array-specifier))))
