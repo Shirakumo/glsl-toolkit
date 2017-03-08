@@ -26,3 +26,8 @@
                                         ,@body)))))))
 
 (trivial-indent:define-indentation with-restructuring-case (4 &rest (&whole 2 (&whole 1 &rest 1) 4 &rest 1)))
+
+(defun mapcar* (function list)
+  (loop for item in list
+        for result = (funcall function item)
+        when result collect result))
