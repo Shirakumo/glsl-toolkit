@@ -44,17 +44,22 @@
        (destructuring-bind (qualifiers specifiers &rest initializers) (rest context)
          (destructuring-bind (identifier array init) (find identifier initializers
                                                            :key #'first :test #'equal)
-           (if (gethash identifier global-env)
-               (cond ((find :uniform qualifiers)     
-                      (error "Previous variable declaration of name ~s clobbers uniform declaration."
-                             identifier))
-                     ((find-any '(:in :out :inout) qualifiers)
-                      (find-matching-declaration
-                       (list qualifiers specifiers identifier array init)
-                       (gethash 'declarations global-env)))
-                     (T
-                      (setf (gethash identifier global-env) (uniquify identifier))))
-               (setf (gethash identifier global-env) identifier)))))
+           (cond ((gethash identifier global-env)
+                  (cond ((find :uniform qualifiers)     
+                         (error "Previous variable declaration of name ~s clobbers uniform declaration."
+                                identifier))
+                        ((find-any '(:in :out :inout) qualifiers)
+                         (or (find-matching-declaration
+                              (list qualifiers specifiers identifier array init)
+                              (gethash 'declarations global-env))
+                             ))
+                        (T
+                         (setf (gethash identifier global-env) (uniquify identifier)))))
+                 (T
+                  (when (find-any '(:in :out :inout) qualifiers)
+                    (push (gethash 'declarations global-env)
+                          (list qualifiers specifiers identifier array init)))
+                  (setf (gethash identifier global-env) identifier))))))
       ;; We assume all struct and function declarations are different
       ;; and not shared across blocks, and thus just overwrite the
       ;; declaration with a new, unique name if it already existed.
