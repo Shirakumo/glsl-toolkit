@@ -33,6 +33,10 @@
   (and (consp (second declaration))
        (find-any '(:in :out :inout) (second declaration))))
 
+;; See https://www.khronos.org/opengl/wiki/Shader_Compilation#Interface_matching
+;; it has some notes on how variables are matched up between shader stages.
+;; We imitate that behaviour, to a degree. We don't match up the same types,
+;; as that would probably lead to confusing merges in most cases.
 (defun handle-declaration (ast context environment global-env)
   (declare (ignore context))
   (unless (root-environment-p environment)

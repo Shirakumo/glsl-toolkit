@@ -43,38 +43,7 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
   (coerce v 'string))
 
 (define-object keyword-token
-      (and (v (or "writeonly" "while" "volatile" "void" "vec4" "vec3" "vec2" "varying" "uvec4"
-                  "uvec3" "uvec2" "using" "usamplerCubeArray" "usamplerCube" "usamplerBuffer"
-                  "usampler3D" "usampler2DRect" "usampler2DMSArray" "usampler2DMS"
-                  "usampler2DArray" "usampler2D" "usampler1DArray" "usampler1D" "unsigned"
-                  "union" "uniform" "uint" "uimageCubeArray" "uimageCube" "uimageBuffer"
-                  "uimage3D" "uimage2DRect" "uimage2DMSArray" "uimage2DMS" "uimage2DArray"
-                  "uimage2D" "uimage1DArray" "uimage1D" "typedef" "true" "this" "template"
-                  "switch" "superp" "subroutine" "struct" "static" "smooth"
-                  "smapler2DRectShadow" "sizeof" "short" "shared" "samplerCubeShadow"
-                  "samplerCubeArrayShadow" "samplerCubeArray" "samplerCube" "samplerBuffer"
-                  "sampler3DRect" "sampler3D" "sampler2DShadow" "sampler2DRect"
-                  "sampler2DMSArray" "sampler2DMS" "sampler2DArrayShadow" "sampler2DArray"
-                  "sampler2D" "sampler1DShadow" "sampler1DArrayShadow" "sampler1DArray"
-                  "sampler1D" "sample" "return" "restrict" "resource" "readonly" "public"
-                  "precision" "precise" "patch" "partition" "out" "otput" "notinline"
-                  "noperspective" "namespace" "mediump" "mat4x4" "mat4x3" "mat4x2" "mat4"
-                  "mat3x4" "mat3x3" "mat3x2" "mat3" "mat2x4" "mat2x3" "mat2x2" "mat2" "lowp"
-                  "long" "layout" "ivec4" "ivec3" "ivec2" "isamplerCubeArray" "isamplerCube"
-                  "isamplerBuffer" "isampler3D" "isampler2DRect" "isampler2DMSArray"
-                  "isampler2DMS" "isampler2DArray" "isampler2D" "isampler1DArray" "isampler1D"
-                  "invariant" "interface" "int" "input" "inout" "inline" "in" "imageCubeArray"
-                  "imageCube" "imageBuffer" "image3D" "image2DRect" "image2DMSArray" "image2DMS"
-                  "image2DArray" "image2D" "image1DArray" "image1D" "iimageCubeArray"
-                  "iimageCube" "iimageBuffer" "iimage3D" "iimage2DRect" "iimage2DMSArray"
-                  "iimage2DMS" "iimage2DArray" "iimage2D" "iimage1DArray" "iimage1D" "if"
-                  "hvec4" "hvec3" "hvec2" "highp" "half" "goto" "fvec4" "fvec3" "fvec2" "for"
-                  "float" "flat" "fixed" "filter" "false" "external" "extern" "enum" "else"
-                  "dvec4" "dvec3" "dvec2" "double" "do" "dmat4x4" "dmat4x3" "dmat4x2" "dmat4"
-                  "dmat3x4" "dmat3x3" "dmat3x2" "dmat3" "dmat2x4" "dmat2x3" "dmat2x2" "dmat2"
-                  "discard" "default" "continue" "cont" "common" "coherent" "class" "centroid"
-                  "cast" "case" "bvec4" "bvec3" "bvec2" "buffer" "break" "bool" "attribute"
-                  "atomic_uint" "asm" "active"))
+      (and (v #.(list* 'or *glsl-keywords*))
            (! (or whitespace operator)))
   (intern (string-upcase (first v)) :keyword))
 
@@ -195,22 +164,14 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
 (define-object prefix-decrement
       (and :-- (v unary-expression)))
 
-(define-reference unary-op-expression
-  same-+
-  negation
-  inversion
-  bit-inversion)
-
 (define-reference unary-expression
   postfix-expression
   prefix-increment
   prefix-decrement
-  unary-op-expression)
-
-(define-reference multiplicative-expression
-  multiplication
-  division
-  modulus)
+  same-+
+  negation
+  inversion
+  bit-inversion)
 
 (defmacro define-binary-op (name left op right)
   `(define-object ,name
@@ -391,37 +352,30 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
 (define-reference basic-type
   (any (;; Transparent Types
         :void :bool :int :uint :float :double
-        :vec2 :vec3 :vec4
-              :dvec2 :dvec3 :dvec4 :bvec2 :bvec3 :bvec4
-              :ivec2 :ivec3 :ivec4 :uvec2 :uvec3 :uvec4
-              :mat2 :mat3 :mat4
-        :mat2x2 :mat2x3 :mat2x4
-              :mat3x2 :mat3x3 :mat3x4
-        :mat4x2 :mat4x3 :mat4x4
-              :dmat2 :dmat3 :dmat4
-        :dmat2x2 :dmat2x3 :dmat2x4
-              :dmat3x2 :dmat3x3 :dmat3x4
-        :dmat4x2 :dmat4x3 :dmat4x4
+        :vec2 :vec3 :vec4 :mat2 :mat3 :mat4
+        :bvec2 :bvec3 :bvec4 :ivec2 :ivec3 :ivec4
+        :uvec2 :uvec3 :uvec4 :dvec2 :dvec3 :dvec4
+        :mat2x2 :mat2x3 :mat2x4 :mat3x2 :mat3x3 :mat3x4
+        :mat4x2 :mat4x3 :mat4x4 :dmat2 :dmat3 :dmat4
+        :dmat2x2 :dmat2x3 :dmat2x4 :dmat3x2
+        :dmat3x3 :dmat3x4 :dmat4x2 :dmat4x3 :dmat4x4
         ;; Floating-Point Opaque Types
-              :sampler1D :image1D
-              :sampler2D :image2D
-              :sampler3D :image3D
-              :samplerCube :imageCube
-              :sampler2DRect :image2DRect
-              :sampler1DArray :image1DArray
-              :sampler2DArray :image2DArray
-              :samplerBuffer :imageBuffer
-              :sampler2DMS :image2DMS
-              :sampler2DMSArray :image2DMSArray
-              :samplerCubeArray :imageCubeArray
               :sampler1DShadow
-        :sampler2DShadow
-              :smapler2DRectShadow
-        :sampler1DArrayShadow
-              :sampler2DArrayShadow
-        :samplerCubeShadow
-              :samplerCubeArrayShadow
-              ;; Signed Integer Opaque Types
+        :sampler1D :image1D
+        :sampler2D :image2D
+        :sampler3D :image3D
+        :samplerCube :imageCube
+        :sampler2DRect :image2DRect
+        :sampler1DArray :image1DArray
+        :sampler2DArray :image2DArray
+        :samplerBuffer :imageBuffer
+        :sampler2DMS :image2DMS
+        :sampler2DMSArray :image2DMSArray
+        :samplerCubeArray :imageCubeArray
+        :sampler2DShadow :smapler2DRectShadow
+        :sampler1DArrayShadow :sampler2DArrayShadow
+        :samplerCubeShadow :samplerCubeArrayShadow
+        ;; Signed Integer Opaque Types
         :isampler1D :iimage1D
         :isampler2D :iimage2D
         :isampler3D :iimage3D
@@ -434,18 +388,18 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
         :isampler2DMSArray :iimage2DMSArray
         :isamplerCubeArray :iimageCubeArray
         ;; Unsigned Integer Opaque Types
-        :atomic_uint
-              :usampler1D :uimage1D
-              :usampler2D :uimage2D
-              :usampler3D :uimage3D
-              :usamplerCube :uimageCube
-              :usampler2DRect :uimage2DRect
-              :usampler1DArray :uimage1DArray
-              :usampler2DArray :uimage2DArray
-              :usamplerBuffer :uimageBuffer
-              :usampler2DMS :uimage2DMS
-              :usampler2DMSArray :uimage2DMSArray
-              :usamplerCubeArray :uimageCubeArray)))
+        :usampler1D :uimage1D
+        :usampler2D :uimage2D
+        :usampler3D :uimage3D
+        :usamplerCube :uimageCube
+        :usampler2DRect :uimage2DRect
+        :usampler1DArray :uimage1DArray
+        :usampler2DArray :uimage2DArray
+        :usamplerBuffer :uimageBuffer
+        :usampler2DMS :uimage2DMS
+        :usampler2DMSArray :uimage2DMSArray
+        :usamplerCubeArray :uimageCubeArray
+        :atomic_uint)))
 
 (define-object struct-specifier
       (and :struct (v identifier)))

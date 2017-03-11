@@ -42,16 +42,6 @@
       (eql value :true)
       (eql value :false)))
 
-(defun variable-p (value environment)
-  (let ((binding (binding value environment)))
-    (and binding
-         (eql :variable (first binding)))))
-
-(defun function-p (value environment)
-  (let ((binding (binding value environment)))
-    (and binding
-         (eql :function (first binding)))))
-
 (defun declaration-p (value environment)
   (declare (ignore environment))
   (and (consp value)
@@ -62,17 +52,37 @@
                              struct-declaration))))
 
 (defun expression-p (value environment)
-  )
-
-(defun statement-p (value environment)
-  )
-
-(defun global-identifier-p (value environment)
-  (not (null (binding value (root environment)))))
-
-(defun local-identifier-p (value environment)
-  (not (eql (binding value environment)
-            (binding value (root environment)))))
+  (or (constant-p value environment)
+      (identifier-p value environment)
+      (and (consp value)
+           (find (first value '(assignment
+                                conditional
+                                logical-or
+                                logical-xor
+                                logical-and
+                                inclusive-or
+                                exclusive-or
+                                bitwise-and
+                                not-equal
+                                equal
+                                greater-equal-than
+                                less-equal-than
+                                greater-than
+                                less-than
+                                right-shift
+                                left-shift
+                                subtraction
+                                addition
+                                modulus
+                                division
+                                multiplication
+                                prefix-decrement
+                                prefix-increment
+                                bit-inversion
+                                inversion
+                                negation
+                                same-+
+                                modified-reference))))))
 
 (defun control-flow-p (value environment)
   (declare (ignore environment))
@@ -87,6 +97,37 @@
                              break
                              return
                              discard))))
+
+(defun keyword-p (value environment)
+  (declare (ignore environment))
+  (find value *glsl-keyword-symbols*))
+
+(defun statement-p (value environment)
+  (or (declaration-p value environment)
+      (expression-p value environment)
+      (control-flow-p value environment)
+      (eql value :\;)))
+
+(defun identifier-p (value environment)
+  (declare (ignore environment))
+  (or (keywordp value) (stringp value)))
+
+(defun global-identifier-p (value environment)
+  (not (null (binding value (root environment)))))
+
+(defun local-identifier-p (value environment)
+  (not (eql (binding value environment)
+            (binding value (root environment)))))
+
+(defun variable-identifier-p (value environment)
+  (let ((binding (binding value environment)))
+    (and binding
+         (eql :variable (first binding)))))
+
+(defun function-identifier-p (value environment)
+  (let ((binding (binding value environment)))
+    (and binding
+         (eql :function (first binding)))))
 
 (defun walk (ast function &optional (environment (make-environment)))
   (walk-inner ast ast function environment))
