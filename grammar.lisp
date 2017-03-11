@@ -51,14 +51,14 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
       (and (v #\#) (* (v (notany (#\Newline)))))
   (list 'preprocessor-directive (coerce v 'string)))
 
-(defmacro define-operator-structs (&body names)
+(defmacro define-operator-objects (&body names)
   `(progn
      ,@(loop for name in names
              collect `(define-object ,name ,(string name) ,(intern (string name) :keyword)))
      (define-reference operator
        ,@names)))
 
-(define-operator-structs
+(define-operator-objects
   = += -= *= /= %= <<= >>= &= ^= \|=
   ++ -- << >>  ^^ \|\| && <= >= < >
   + - * / % & ^ ! \|
