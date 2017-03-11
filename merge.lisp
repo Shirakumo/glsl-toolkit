@@ -29,9 +29,16 @@
 (defun find-layout-qualifier (qualifiers)
   (find 'layout-qualifier qualifiers :key (lambda (a) (if (listp a) (first a) a))))
 
-(defun pipeline-declaration-p (declaration)
-  (and (consp (second declaration))
-       (find-any '(:in :out :inout) (second declaration))))
+(defun find-direction-qualifier (qualifiers)
+  (find-any '(:in :out :inout) qualifiers))
+
+(defun find-matching-layout-declaration (qualifiers declarations)
+  (find (find-layout-qualifier qualifiers)
+        (loop with direction = (find-direction-qualifier qualifiers)
+              for declaration in declarations
+              when (find direction (first declaration))
+              collect declaration)
+        :test #'equal :key (lambda (a) (find-layout-qualifier (first a)))))
 
 ;; See https://www.khronos.org/opengl/wiki/Shader_Compilation#Interface_matching
 ;; it has some notes on how variables are matched up between shader stages.
@@ -56,12 +63,12 @@
       (precision-declaration
        ast)
       (variable-declaration
-       (cond ((pipeline-declaration-p ast)
+       (cond ((find-direction-qualifier (second ast))
               (destructuring-bind (qualifiers specifiers identifier array &optional init) (rest ast)
                 (cond ((find-layout-qualifier qualifiers)
-                       (let ((matching (find (find-layout-qualifier qualifiers)
-                                             (gethash 'declarations global-env)
-                                             :test #'equal :key (lambda (a) (find-layout-qualifier (first a))))))
+                       (let ((matching (find-matching-layout-declaration
+                                        qualifiers
+                                        (gethash 'declarations global-env))))
                          (cond ((not matching)
                                 (push (rest ast) (gethash 'declarations global-env))
                                 ast)

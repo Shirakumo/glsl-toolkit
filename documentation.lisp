@@ -75,11 +75,8 @@ The fifth of both lists (initializers) must not match.")
   (function find-layout-qualifier
     "Find the layout qualifier object in the qualifiers list.")
 
-  (function pipeline-declaration-p
-    "Returns true if the given declaration declares a variable relevant to the pipeline.
-
-This is to say, it returns true if the second of the declaration
- (the qualifiers) contains either :IN :OUT or :INOUT.")
+  (function find-direction-qualifier
+    "Find the direction qualifier keyword in the qualifiers list.")
 
   (function handle-declaration
     "Handles a declaration during a shader merging operation.
@@ -111,7 +108,7 @@ More specifically, the following strategy is employed here:
 - Otherwise store the identifier directly and return the AST as-is
 
 See https://www.khronos.org/opengl/wiki/Shader_Compilation#Interface_matching
-See PIPELINE-DECLARATION-P
+See FIND-DIRECTION-QUALIFIER
 See FIND-LAYOUT-QUALIFIER
 See MATCHING-DECLARATORS-P
 See MERGE-SHADERS")
