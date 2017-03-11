@@ -49,6 +49,12 @@
     (and binding
          (eql :function (first binding)))))
 
+(defun declaration-p (value environment)
+  (declare (ignore environment))
+  (and (consp value)
+       (find (first value) '(function-prototype variable-declaration
+                             precision-declaration struct-declaration))))
+
 (defun expression-p (value environment)
   )
 
