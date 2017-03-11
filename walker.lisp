@@ -155,7 +155,11 @@
             type
             NIL)
            (variable-declaration (qualifier specifier identifier array &optional init)
-            qualifier specifier (walk identifier) array (when init (list init)))
+            qualifier specifier
+            (progn (setf (binding identifier environment)
+                         (list :variable qualifier specifier array))
+                   (walk identifier))
+            array (when init (list init)))
            (layout-qualifier (&rest ids)
             (mapcar #'walk ids))
            (layout-qualifier-id (identifier &optional value)
