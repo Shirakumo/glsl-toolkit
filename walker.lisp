@@ -34,6 +34,11 @@
 (defun root-environment-p (environment)
   (eql environment (root environment)))
 
+(defun preprocessor-p (value environment)
+  (declare (ignore environment))
+  (and (consp value)
+       (eql (first value) 'preprocessor-directive)))
+
 (defun constant-p (value environment)
   (declare (ignore environment))
   (or (integerp value)
@@ -55,34 +60,34 @@
   (or (constant-p value environment)
       (identifier-p value environment)
       (and (consp value)
-           (find (first value '(assignment
-                                conditional
-                                logical-or
-                                logical-xor
-                                logical-and
-                                inclusive-or
-                                exclusive-or
-                                bitwise-and
-                                not-equal
-                                equal
-                                greater-equal-than
-                                less-equal-than
-                                greater-than
-                                less-than
-                                right-shift
-                                left-shift
-                                subtraction
-                                addition
-                                modulus
-                                division
-                                multiplication
-                                prefix-decrement
-                                prefix-increment
-                                bit-inversion
-                                inversion
-                                negation
-                                same-+
-                                modified-reference))))))
+           (find (first value) '(assignment
+                                 conditional
+                                 logical-or
+                                 logical-xor
+                                 logical-and
+                                 inclusive-or
+                                 exclusive-or
+                                 bitwise-and
+                                 not-equal
+                                 equal
+                                 greater-equal-than
+                                 less-equal-than
+                                 greater-than
+                                 less-than
+                                 right-shift
+                                 left-shift
+                                 subtraction
+                                 addition
+                                 modulus
+                                 division
+                                 multiplication
+                                 prefix-decrement
+                                 prefix-increment
+                                 bit-inversion
+                                 inversion
+                                 negation
+                                 same-+
+                                 modified-reference)))))
 
 (defun control-flow-p (value environment)
   (declare (ignore environment))
@@ -130,9 +135,9 @@
          (eql :function (first binding)))))
 
 (defun walk (ast function &optional (environment (make-environment)))
-  (walk-inner ast ast function environment))
+  (walk-part ast ast function environment))
 
-(defun walk-inner (ast context function environment)
+(defun walk-part (ast context function environment)
   (flet ((walk (node &optional (environment environment))
            (walk-inner node ast function environment)))
     (etypecase ast
@@ -141,150 +146,252 @@
       (cons
        (setf ast (funcall function ast context environment))
        (when ast
-         (with-restructuring-case ast
-           (unsigned-int (int)
-            int
-            NIL)
-           (preprocessor-directive (directive)
-            directive
-            NIL)
-           (modified-reference (expression &rest modifiers)
-            (walk expression)
-            (mapcar* #'walk modifiers))
-           (field-modifier (identifier)
-            (walk identifier)
-            NIL)
-           (array-modifier (expression)
-            (walk expression)
-            NIL)
-           (increment-modifier ()
-            NIL)
-           (decrement-modifier ()
-            NIL)
-           (call-modifier (&rest values)
-            (mapcar* #'walk values))
-           ((same-+ negation inversion bit-inversion
-             prefix-increment prefix-decrement) (expression)
-            (walk expression)
-            NIL)
-           ((multiplication division modulus addition
-             subtraction left-shift right-shift less-than
-             greater-than less-equal-than greater-equal-than
-             equal not-equal bitwise-and exclusive-or
-             inclusive-or logical-and logical-xor logical-or) (left right)
-            (walk left)
-            (walk right)
-            NIL)
-           (conditional (condition expression else)
-            (walk condition)
-            (walk expression)
-            (walk else)
-            NIL)
-           (assignment (place op value)
-            (walk place)
-            op
-            (walk value)
-            NIL)
-           (multiple-expressions (&rest expressions)
-            (mapcar* #'walk expressions))
-           (function-declaration (prototype)
-            (walk prototype)
-            NIL)
-           (function-prototype (qualifier specifier identifier &rest parameters)
-            qualifier
-            specifier
-            (progn (setf (binding identifier environment)
-                         (list :function qualifier specifier parameters))
-                   (walk identifier))
-            parameters)
-           (precision-declarator (precision type)
-            precision
-            type
-            NIL)
-           (variable-declaration (qualifier specifier identifier array &optional init)
-            qualifier specifier
-            (progn (setf (binding identifier environment)
-                         (list :variable qualifier specifier array))
-                   (walk identifier))
-            array (when init (list init)))
-           (layout-qualifier (&rest ids)
-            (mapcar #'walk ids))
-           (layout-qualifier-id (identifier &optional value)
-            (walk identifier)
-            (when value (list (walk value))))
-           (type-qualifier (&rest qualifiers)
-            qualifiers)
-           (subroutine-qualifier (&optional type-name)
-            type-name
-            NIL)
-           (type-specifier (type &optional array)
-            type
-            (when array (list array)))
-           (array-specifier (&rest specifiers)
-            specifiers)
-           (type-name (identifier)
-            (walk identifier)
-            NIL)
-           (struct-specifier (identifier)
-            (walk identifier)
-            NIL)
-           (struct-declaration (identifier &rest declarators)
-            (walk identifier)
-            (mapcar* #'walk declarators))
-           (struct-declarator (qualifier specifier &rest fields)
-            qualifier
-            specifier
-            (mapcar* #'walk fields))
-           (array-initializer (&rest initializers)
-            (mapcar* #'walk initializers))
-           (multiple-statements (&rest statements)
-            (mapcar* #'walk statements))
-           (compound-statement (&rest statements)
-            (let ((environment (make-environment environment)))
-              (loop for statement in statements
-                    for item = (walk statement environment)
-                    when item collect item)))
-           (selection-statement (expression statement &optional else)
-            (walk expression)
-            (walk statement)
-            (when else (list (walk else))))
-           (condition-declarator (qualifier specifier identifier initializer)
-            qualifier
-            specifier
-            (progn (setf (binding identifier environment)
-                         (list :variable qualifier specifier NIL))
-                   (walk identifier))
-            (walk initializer)
-            NIL)
-           (switch-statement (expression statement)
-            (walk expression)
-            (walk statement)
-            NIL)
-           (case-label (expression)
-            (if (eql expression :default)
-                :default
-                (walk expression))
-            NIL)
-           (while-statement (condition statement)
-            (walk condition)
-            (walk statement)
-            NIL)
-           (do-statement (statement expression)
-             (walk statement)
-             (walk expression)
-             NIL)
-           (for-statement (declaration condition expression statement)
-            (walk declaration)
-            (walk condition)
-            (walk expression)
-            (walk statement)
-            NIL)
-           ((continue break discard) ())
-           (return (&optional value)
-                   (when value (list (walk value))))
-           (function-definition (prototype statement)
-            (walk prototype)
-            (walk statement)
-            NIL)
-           (shader (&rest items)
-            (mapcar* #'walk items))))))))
+         (funcall (or (walker (first ast))
+                      (error "Cannot walk AST-object of type ~s."
+                             (first ast)))
+                  ast function environment))))))
+
+(defvar *walkers* (make-hash-table :test 'eql))
+
+(defun walker (type)
+  (gethash type *walkers*))
+
+(defun (setf walker) (function type)
+  (setf (gethash type *walkers*) function))
+
+(defun remove-walker (type)
+  (remhash type *walkers*))
+
+(defmacro define-walker (type (ast func env) &body body)
+  `(progn (setf (walker ',type)
+                (lambda (,ast ,func ,env)
+                  ,@body))
+          ',type))
+
+(defmacro define-walking-body (type args &body body)
+  (destructuring-bind (type &key (ast (gensym "AST"))
+                                 (func (gensym "FUNC"))
+                                 (env (gensym "ENV"))) (enlist type)
+    `(define-walker ,type (,ast ,func ,env)
+       (flet ((walk (node &optional (,env ,env))
+                (walk-inner node ,ast ,func ,env)))
+         (destructuring-bind ,args (rest ,ast)
+           (list* ',type
+                  ,@body))))))
+
+(defmacro define-empty-op-walking (type)
+  `(define-walking-body ,type ()
+     NIL))
+
+(defmacro define-unary-op-walker (type)
+  `(define-walking-body ,type (inner)
+     (walk inner)
+     NIL))
+
+(defmacro define-binary-op-walker (type)
+  `(define-walking-body ,type (left right)
+     (walk left)
+     (walk right)
+     NIL))
+
+(define-walking-body unsigned-int (int)
+  int
+  NIL)
+
+(define-walking-body preprocessor-directive (directive)
+  directive
+  NIL)
+
+(define-walking-body modified-reference (expression &rest modifiers)
+  (walk expression)
+  (mapcar* #'walk modifiers))
+
+(define-walking-body field-modifier (identifier)
+  (walk identifier)
+  NIL)
+
+(define-walking-body array-modifier (expression)
+  (walk expression)
+  NIL)
+
+(define-walking-body increment-modifier ()
+  NIL)
+
+(define-walking-body decrement-modifier ()
+  NIL)
+
+(define-walking-body call-modifier (&rest values)
+  (mapcar* #'walk values))
+
+(define-unary-op-walker same-+)
+(define-unary-op-walker negation)
+(define-unary-op-walker inversion)
+(define-unary-op-walker bit-inversion)
+(define-unary-op-walker prefix-increment)
+(define-unary-op-walker prefix-decrement)
+
+(define-binary-op-walker multiplication)
+(define-binary-op-walker division)
+(define-binary-op-walker modulus)
+(define-binary-op-walker addition)
+(define-binary-op-walker subtraction)
+(define-binary-op-walker left-shift)
+(define-binary-op-walker right-shift)
+(define-binary-op-walker less-than)
+(define-binary-op-walker greater-than)
+(define-binary-op-walker less-equal-than)
+(define-binary-op-walker greater-equal-than)
+(define-binary-op-walker equal)
+(define-binary-op-walker not-equal)
+(define-binary-op-walker bitwise-and)
+(define-binary-op-walker exclusive-or)
+(define-binary-op-walker inclusive-or)
+(define-binary-op-walker logical-and)
+(define-binary-op-walker logical-xor)
+(define-binary-op-walker logical-or)
+
+(define-walking-body conditional (condition expression else)
+  (walk condition)
+  (walk expression)
+  (walk else)
+  NIL)
+
+(define-walking-body assignment (place op value)
+  (walk place)
+  op
+  (walk value)
+  NIL)
+
+(define-walking-body multiple-expressions (&rest expressions)
+  (mapcar* #'walk expressions))
+
+(define-walking-body function-declaration (prototype)
+  (walk prototype)
+  NIL)
+
+(define-walking-body (function-prototype :env env) (qualifier specifier identifier &rest parameters)
+  qualifier
+  specifier
+  (progn (setf (binding identifier env)
+               (list :function qualifier specifier parameters))
+         (walk identifier))
+  parameters)
+
+(define-walking-body precision-declarator (precision type)
+  precision
+  type
+  NIL)
+
+(define-walking-body (variable-declaration :env env) (qualifier specifier identifier array &optional init)
+  qualifier specifier
+  (progn (setf (binding identifier env)
+               (list :variable qualifier specifier array))
+         (walk identifier))
+  array (when init (list init)))
+
+(define-walking-body layout-qualifier (&rest ids)
+  (mapcar #'walk ids))
+
+(define-walking-body layout-qualifier-id (identifier &optional value)
+  (walk identifier)
+  (when value (list (walk value))))
+
+(define-walking-body type-qualifier (&rest qualifiers)
+  qualifiers)
+
+(define-walking-body subroutine-qualifier (&optional type-name)
+  type-name
+  NIL)
+
+(define-walking-body type-specifier (type &optional array)
+  type
+  (when array (list array)))
+
+(define-walking-body array-specifier (&rest specifiers)
+  specifiers)
+
+(define-walking-body type-name (identifier)
+  (walk identifier)
+  NIL)
+
+(define-walking-body struct-specifier (identifier)
+  (walk identifier)
+  NIL)
+
+(define-walking-body struct-declaration (identifier &rest declarators)
+  (walk identifier)
+  (mapcar* #'walk declarators))
+
+(define-walking-body struct-declarator (qualifier specifier &rest fields)
+  qualifier
+  specifier
+  (mapcar* #'walk fields))
+
+(define-walking-body array-initializer (&rest initializers)
+  (mapcar* #'walk initializers))
+
+(define-walking-body multiple-statements (&rest statements)
+  (mapcar* #'walk statements))
+
+(define-walking-body (compound-statement :env env) (&rest statements)
+  (let ((env (make-environment env)))
+    (loop for statement in statements
+          for item = (walk statement env)
+          when item collect item)))
+
+(define-walking-body selection-statement (expression statement &optional else)
+  (walk expression)
+  (walk statement)
+  (when else (list (walk else))))
+
+(define-walking-body (condition-declarator :env env) (qualifier specifier identifier initializer)
+  qualifier
+  specifier
+  (progn (setf (binding identifier env)
+               (list :variable qualifier specifier NIL))
+         (walk identifier))
+  (walk initializer)
+  NIL)
+
+(define-walking-body switch-statement (expression statement)
+  (walk expression)
+  (walk statement)
+  NIL)
+
+(define-walking-body case-label (expression)
+  (if (eql expression :default)
+      :default
+      (walk expression))
+  NIL)
+
+(define-walking-body while-statement (condition statement)
+  (walk condition)
+  (walk statement)
+  NIL)
+
+(define-walking-body do-statement (statement expression)
+  (walk statement)
+  (walk expression)
+  NIL)
+
+(define-walking-body for-statement (declaration condition expression statement)
+  (walk declaration)
+  (walk condition)
+  (walk expression)
+  (walk statement)
+  NIL)
+
+(define-empty-op-walking continue)
+(define-empty-op-walking break)
+(define-empty-op-walking discard)
+
+(define-walking-body return (&optional value)
+  (when value (list (walk value))))
+
+(define-walking-body function-definition (prototype statement)
+  (walk prototype)
+  (walk statement)
+  NIL)
+
+(define-walking-body shader (&rest items)
+  (mapcar* #'walk items))

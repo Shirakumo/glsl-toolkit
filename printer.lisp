@@ -58,8 +58,28 @@
                      (T
                       (write-char (char string i) out)))))))
 
-(defun preprocessor-p (thing)
-  (and (consp thing) (eql (first thing) 'preprocessor-directive)))
+(defvar *serializers* (make-hash-table :test 'eql))
+
+(defun serializer (type)
+  (gethash type *serializers*))
+
+(defun (setf serializer) (function type)
+  (setf (gethash type *serializers*) function))
+
+(defun remove-serializer (type)
+  (remhash type *serializers*))
+
+(defmacro define-serializer (type (object) &body body)
+  `(progn (setf (serializer ',type)
+                (lambda (,object)
+                  ,@body))
+          ',type))
+
+(defmacro define-serialization (type args &body body)
+  (let ((object (gensym "OBJECT")))
+    `(define-serializer ,type (,object)
+       (destructuring-bind ,args (rest ,object)
+         ,@body))))
 
 (defun serialize-part (part)
   (etypecase part
@@ -74,157 +94,226 @@
     (null)
     ((eql #.no-value))
     (cons
-     (with-object-case part 
-       (unsigned-int (int)
-        (serialize-part int)
-        (sformat "u"))
-       (preprocessor-directive (directive)
-        (sformat "~&~a~%" directive))
-       (modified-reference (expression &rest modifiers)
-        (sformat "~o~{~o~}" expression modifiers))
-       (field-modifier (identifier)
-        (sformat ".~o" identifier))
-       (array-modifier (expression)
-        (sformat "[~o]" expression))
-       (increment-modifier ()
-        (sformat "++"))
-       (decrement-modifier ()
-        (sformat "--"))
-       (call-modifier (&rest values)
-        (sformat "(~{~o~^, ~})" values))
-       (same-+ (expression)
-        (sformat "+~o" expression))
-       (negation (expression)
-        (sformat "-~o" expression))
-       (inversion (expression)
-        (sformat "!~o" expression))
-       (bit-inversion (expression)
-        (sformat "~~~o" expression))
-       (prefix-increment (expression)
-        (sformat "++~o" expression))
-       (prefix-decrement (expression)
-        (sformat "--~o" expression))
-       (multiplication (left right)
-        (sformat "(~o * ~o)" left right))
-       (division (left right)
-        (sformat "(~o / ~o)" left right))
-       (modulus (left right)
-        (sformat "(~o % ~o)" left right))
-       (addition (left right)
-        (sformat "(~o + ~o)" left right))
-       (subtraction (left right)
-        (sformat "(~o - ~o)" left right))
-       (left-shift (left right)
-        (sformat "(~o << ~o)" left right))
-       (right-shift (left right)
-        (sformat "(~o >> ~o)" left right))
-       (less-than (left right)
-        (sformat "(~o < ~o)" left right))
-       (greater-than (left right)
-        (sformat "(~o > ~o)" left right))
-       (less-equal-than (left right)
-        (sformat "(~o <= ~o)" left right))
-       (greater-equal-than (left right)
-        (sformat "(~o >= ~o)" left right))
-       (equal (left right)
-        (sformat "(~o == ~o)" left right))
-       (not-equal (left right)
-        (sformat "(~o != ~o)" left right))
-       (bitwise-and (left right)
-        (sformat "(~o & ~o)" left right))
-       (exclusive-or (left right)
-        (sformat "(~o ^ ~o)" left right))
-       (inclusive-or (left right)
-        (sformat "(~o | ~o)" left right))
-       (logical-and (left right)
-        (sformat "(~o && ~o)" left right))
-       (logical-xor (left right)
-        (sformat "(~o ^^ ~o)" left right))
-       (logical-or (left right)
-        (sformat "(~o || ~o)" left right))
-       (conditional (condition expression else)
-        (sformat "~o? ~o :~o" condition expression else))
-       (assignment (place op value)
-        (sformat "~o ~a ~o" place op value))
-       (multiple-expressions (&rest expressions)
-        (sformat "~{~o~^, ~}" expressions))
-       (function-declaration (prototype)
-        (sformat "~o" prototype))
-       (function-prototype (qualifier specifier identifier &rest parameters)
-        (sformat "~o~o ~o(~{~{~o~^ ~}~^, ~})"
-                 qualifier specifier identifier parameters))
-       (precision-declarator (precision type)
-        (sformat "precision ~o ~o" precision type))
-       (variable-declaration (qualifier specifier identifier array &optional initializer)
-        (sformat "~o~o ~o~o~@[ = ~o~]" qualifier specifier identifier array initializer))
-       (layout-qualifier (&rest ids)
-        (sformat "layout(~{~o~^, ~})" ids))
-       (layout-qualifier-id (identifier &optional value)
-        (sformat "~o~@[ = ~o~]" identifier value))
-       (type-qualifier (&rest qualifiers)
-        (sformat "~{~o ~}" qualifiers))
-       (subroutine-qualifier (&optional type-name)
-        (sformat "subroutine~@[(~o)~]" type-name))
-       (type-specifier (type &optional array)
-        (sformat "~o~@[~o~]" type array))
-       (array-specifier (&rest specifiers)
-        (sformat "~:[[]~;~:*~{[~o]~}~]" specifiers))
-       (type-name (identifier)
-        (sformat "~o" identifier))
-       (struct-specifier (identifier)
-        (sformat "struct ~o" identifier))
-       (struct-declaration (identifier &rest declarators)
-        (sformat "struct ~o{~{~o~}}" identifier declarators))
-       (struct-declarator (qualifier specifier &rest fields)
-        (sformat "~o~o~{~{~o~^ ~}~^, ~};" qualifier specifier fields))
-       (array-initializer (initializer &rest initializers)
-        (sformat "{~o~{, ~o~}}" initializer initializers))
-       (multiple-statements (&optional statement &rest statements)
-        (when statement
-          (sformat "~o" statement)
-          (loop for statement in statements
-                do (sformat ";") (indent) (sformat "~o" statement))))
-       (compound-statement (&rest statements)
-        (sformat "{")
-        (with-indentation ()
-          (dolist (statement statements)
-            (cond ((preprocessor-p statement)
-                   (sformat "~o" statement))
-                  (T
-                   (indent) (sformat "~o;" statement)))))
-        (indent) (sformat "}"))
-       (selection-statement (expression statement &optional else)
-        (sformat "if(~o)~o~@[else~o~]" expression statement else))
-       (condition-declarator (qualifier specifier identifier initializer)
-        (sformat "~o~o ~o = ~o" qualifier specifier identifier initializer))
-       (switch-statement (expression statement)
-        (sformat "switch(~o)~o" expression statement))
-       (case-label (case)
-        (if (eql :default case)
-            (sformat "default: ")
-            (sformat "case ~o: " case)))
-       (while-statement (condition statement)
-        (sformat "while(~o)~o" condition statement))
-       (do-statement (statement expression)
-         (sformat "do~o" statement)
-         (indent) (sformat "while(~o)" expression))
-       (for-statement (declaration condition expression statement)
-        (sformat "for(~o; ~o; ~o)~o" declaration condition expression statement))
-       (continue ()
-        (sformat "continue"))
-       (break ()
-        (sformat "break"))
-       (return (&optional value)
-        (sformat "return~@[ ~o~]" value))
-       (discard ()
-        (sformat "discard"))
-       (function-definition (prototype statement)
-        (sformat "~%~o~o" prototype statement))
-       (shader (&rest items)
-        (dolist (item items)
-          (cond ((preprocessor-p item)
-                 (serialize-part item))
-                (T
-                 (indent)
-                 (serialize-part item)
-                 (sformat ";")))))))))
+     (funcall (or (serializer (first part))
+                  (error "Cannot serialize AST-object of type ~s."
+                         (first part)))
+              part))))
+
+(define-serialization unsigned-int (int)
+  (serialize-part int)
+  (sformat "u"))
+
+(define-serialization preprocessor-directive (directive)
+  (sformat "~&~a~%" directive))
+
+(define-serialization modified-reference (expression &rest modifiers)
+  (sformat "~o~{~o~}" expression modifiers))
+
+(define-serialization field-modifier (identifier)
+  (sformat ".~o" identifier))
+
+(define-serialization array-modifier (expression)
+  (sformat "[~o]" expression))
+
+(define-serialization increment-modifier ()
+  (sformat "++"))
+
+(define-serialization decrement-modifier ()
+  (sformat "--"))
+
+(define-serialization call-modifier (&rest values)
+  (sformat "(~{~o~^, ~})" values))
+
+(define-serialization same-+ (expression)
+  (sformat "+~o" expression))
+
+(define-serialization negation (expression)
+  (sformat "-~o" expression))
+
+(define-serialization inversion (expression)
+  (sformat "!~o" expression))
+
+(define-serialization bit-inversion (expression)
+  (sformat "~~~o" expression))
+
+(define-serialization prefix-increment (expression)
+  (sformat "++~o" expression))
+
+(define-serialization prefix-decrement (expression)
+  (sformat "--~o" expression))
+
+(define-serialization multiplication (left right)
+  (sformat "(~o * ~o)" left right))
+
+(define-serialization division (left right)
+  (sformat "(~o / ~o)" left right))
+
+(define-serialization modulus (left right)
+  (sformat "(~o % ~o)" left right))
+
+(define-serialization addition (left right)
+  (sformat "(~o + ~o)" left right))
+
+(define-serialization subtraction (left right)
+  (sformat "(~o - ~o)" left right))
+
+(define-serialization left-shift (left right)
+  (sformat "(~o << ~o)" left right))
+
+(define-serialization right-shift (left right)
+  (sformat "(~o >> ~o)" left right))
+
+(define-serialization less-than (left right)
+  (sformat "(~o < ~o)" left right))
+
+(define-serialization greater-than (left right)
+  (sformat "(~o > ~o)" left right))
+
+(define-serialization less-equal-than (left right)
+  (sformat "(~o <= ~o)" left right))
+
+(define-serialization greater-equal-than (left right)
+  (sformat "(~o >= ~o)" left right))
+
+(define-serialization equal (left right)
+  (sformat "(~o == ~o)" left right))
+
+(define-serialization not-equal (left right)
+  (sformat "(~o != ~o)" left right))
+
+(define-serialization bitwise-and (left right)
+  (sformat "(~o & ~o)" left right))
+
+(define-serialization exclusive-or (left right)
+  (sformat "(~o ^ ~o)" left right))
+
+(define-serialization inclusive-or (left right)
+  (sformat "(~o | ~o)" left right))
+
+(define-serialization logical-and (left right)
+  (sformat "(~o && ~o)" left right))
+
+(define-serialization logical-xor (left right)
+  (sformat "(~o ^^ ~o)" left right))
+
+(define-serialization logical-or (left right)
+  (sformat "(~o || ~o)" left right))
+
+(define-serialization conditional (condition expression else)
+  (sformat "~o? ~o :~o" condition expression else))
+
+(define-serialization assignment (place op value)
+  (sformat "~o ~a ~o" place op value))
+
+(define-serialization multiple-expressions (&rest expressions)
+  (sformat "~{~o~^, ~}" expressions))
+
+(define-serialization function-declaration (prototype)
+  (sformat "~o" prototype))
+
+(define-serialization function-prototype (qualifier specifier identifier &rest parameters)
+  (sformat "~o~o ~o(~{~{~o~^ ~}~^, ~})"
+           qualifier specifier identifier parameters))
+
+(define-serialization precision-declarator (precision type)
+  (sformat "precision ~o ~o" precision type))
+
+(define-serialization variable-declaration (qualifier specifier identifier array &optional initializer)
+  (sformat "~o~o ~o~o~@[ = ~o~]" qualifier specifier identifier array initializer))
+
+(define-serialization layout-qualifier (&rest ids)
+  (sformat "layout(~{~o~^, ~})" ids))
+
+(define-serialization layout-qualifier-id (identifier &optional value)
+  (sformat "~o~@[ = ~o~]" identifier value))
+
+(define-serialization type-qualifier (&rest qualifiers)
+  (sformat "~{~o ~}" qualifiers))
+
+(define-serialization subroutine-qualifier (&optional type-name)
+  (sformat "subroutine~@[(~o)~]" type-name))
+
+(define-serialization type-specifier (type &optional array)
+  (sformat "~o~@[~o~]" type array))
+
+(define-serialization array-specifier (&rest specifiers)
+  (sformat "~:[[]~;~:*~{[~o]~}~]" specifiers))
+
+(define-serialization type-name (identifier)
+  (sformat "~o" identifier))
+
+(define-serialization struct-specifier (identifier)
+  (sformat "struct ~o" identifier))
+
+(define-serialization struct-declaration (identifier &rest declarators)
+  (sformat "struct ~o{~{~o~}}" identifier declarators))
+
+(define-serialization struct-declarator (qualifier specifier &rest fields)
+  (sformat "~o~o~{~{~o~^ ~}~^, ~};" qualifier specifier fields))
+
+(define-serialization array-initializer (initializer &rest initializers)
+  (sformat "{~o~{, ~o~}}" initializer initializers))
+
+(define-serialization multiple-statements (&optional statement &rest statements)
+  (when statement
+    (sformat "~o" statement)
+    (loop for statement in statements
+          do (sformat ";") (indent) (sformat "~o" statement))))
+
+(define-serialization compound-statement (&rest statements)
+  (sformat "{")
+  (with-indentation ()
+    (dolist (statement statements)
+      (cond ((preprocessor-p statement NIL)
+             (sformat "~o" statement))
+            (T
+             (indent) (sformat "~o;" statement)))))
+  (indent) (sformat "}"))
+
+(define-serialization selection-statement (expression statement &optional else)
+  (sformat "if(~o)~o~@[else~o~]" expression statement else))
+
+(define-serialization condition-declarator (qualifier specifier identifier initializer)
+  (sformat "~o~o ~o = ~o" qualifier specifier identifier initializer))
+
+(define-serialization switch-statement (expression statement)
+  (sformat "switch(~o)~o" expression statement))
+
+(define-serialization case-label (case)
+  (if (eql :default case)
+      (sformat "default: ")
+      (sformat "case ~o: " case)))
+
+(define-serialization while-statement (condition statement)
+  (sformat "while(~o)~o" condition statement))
+
+(define-serialization do-statement (statement expression)
+  (sformat "do~o" statement)
+  (indent) (sformat "while(~o)" expression))
+
+(define-serialization for-statement (declaration condition expression statement)
+  (sformat "for(~o; ~o; ~o)~o" declaration condition expression statement))
+
+(define-serialization continue ()
+  (sformat "continue"))
+
+(define-serialization break ()
+  (sformat "break"))
+
+(define-serialization return (&optional value)
+  (sformat "return~@[ ~o~]" value))
+
+(define-serialization discard ()
+  (sformat "discard"))
+
+(define-serialization function-definition (prototype statement)
+  (sformat "~%~o~o" prototype statement))
+
+(define-serialization shader (&rest items)
+  (dolist (item items)
+    (cond ((preprocessor-p item NIL)
+           (serialize-part item))
+          (T
+           (indent)
+           (serialize-part item)
+           (sformat ";")))))
