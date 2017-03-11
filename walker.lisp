@@ -52,8 +52,11 @@
 (defun declaration-p (value environment)
   (declare (ignore environment))
   (and (consp value)
-       (find (first value) '(function-prototype variable-declaration
-                             precision-declaration struct-declaration))))
+       (find (first value) '(function-declaration
+                             function-definition
+                             variable-declaration
+                             precision-declaration
+                             struct-declaration))))
 
 (defun expression-p (value environment)
   )
