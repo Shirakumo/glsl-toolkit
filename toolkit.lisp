@@ -34,3 +34,10 @@
 
 (defun find-any (choices sequence)
   (find choices sequence :test (lambda (a b) (find b a))))
+
+(defun merge-plists (a b)
+  (let ((res (copy-list a)))
+    (loop for (key val) on b by #'cddr
+          do (setf (getf key res)
+                   (append (getf key res) val)))
+    res))

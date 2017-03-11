@@ -21,84 +21,125 @@
 (defun matching-specifiers-p (a b)
   (null (set-difference a b :test #'equal)))
 
-(defun find-matching-declaration (declaration declarations)
-  )
+(defun matching-declarator-p (a b)
+  (and (matching-qualifiers-p (first a) (first b))
+       (matching-specifiers-p (second a) (second b))
+       (equal (fourth a) (fourth a))))
 
-(defun handle-global-identifier (identifier context environment global-env)
+(defun find-layout-qualifier (qualifiers)
+  (find 'layout-qualifier qualifiers :key (lambda (a) (if (listp a) (first a) a))))
+
+(defun pipeline-declaration-p (declaration)
+  (and (consp (second declaration))
+       (find-any '(:in :out :inout) (second declaration))))
+
+(defun handle-declaration (ast context environment global-env)
+  (declare (ignore context))
+  (unless (root-environment-p environment)
+    (return-from handle-declaration ast))
   (flet ((store-identifier (from &optional (to from))
            (setf (gethash from global-env)
                  (if (gethash from global-env)
                      (uniquify to)
                      to))))
-    (case (first context)
-      ;; Variable handling is a bit complicated because we want to
-      ;; ensure that duplicate definitions of variables that are
-      ;; referring to "the same thing" are merged together rather
-      ;; than delegated to unique fields.
-      ;;
-      ;; We must merge fields marked as `in`, `inout`, `out`, and
-      ;; `uniform`. This must be in accordance to the GLSL spec,
-      ;; which can be read here:
-      ;; https://www.khronos.org/opengl/wiki/Shader_Compilation#Interface_matching
-      (variable-declaration
-       (destructuring-bind (qualifiers specifiers &rest initializers) (rest context)
-         (destructuring-bind (identifier array init) (find identifier initializers
-                                                           :key #'first :test #'equal)
-           (cond ((gethash identifier global-env)
-                  (cond ((find :uniform qualifiers)     
-                         (error "Previous variable declaration of name ~s clobbers uniform declaration."
-                                identifier))
-                        ((find-any '(:in :out :inout) qualifiers)
-                         (or (find-matching-declaration
-                              (list qualifiers specifiers identifier array init)
-                              (gethash 'declarations global-env))
-                             ))
-                        (T
-                         (setf (gethash identifier global-env) (uniquify identifier)))))
-                 (T
-                  (when (find-any '(:in :out :inout) qualifiers)
-                    (push (gethash 'declarations global-env)
-                          (list qualifiers specifiers identifier array init)))
-                  (setf (gethash identifier global-env) identifier))))))
-      ;; We assume all struct and function declarations are different
-      ;; and not shared across blocks, and thus just overwrite the
-      ;; declaration with a new, unique name if it already existed.
-      ;;
-      ;; This means that we cannot catch potential internal
-      ;; consistency faults, such as two function declarations within
-      ;; the same file or an undeclared variable reference in a later
-      ;; block referring to an earlier block's function declaration.
-      ;;
-      ;; For now, we consider this merge strategy to only guarantee
-      ;; valid results for already valid shader parts.
-      (function-prototype
-       (store-identifier identifier))
+    (case (first ast)
+      ((function-definition function-declaration)
+       (store-identifier (fourth (second ast)))
+       ast)
       (struct-declaration
-       (store-identifier `(:struct ,identifier)))
-      (struct-specifier
-       (gethash `(:struct ,identifier) global-env))
-      (T
-       (or (gethash identifier global-env)
-           identifier)))))
+       (store-identifier `(:struct ,(second ast)))
+       ast)
+      (precision-declaration
+       ast)
+      (variable-declaration
+       (cond ((pipeline-declaration-p ast)
+              (destructuring-bind (qualifiers specifiers identifier array &optional init) (rest ast)
+                (cond ((find-layout-qualifier qualifiers)
+                       (let ((matching (find (find-layout-qualifier qualifiers)
+                                             (gethash 'declarations global-env)
+                                             :test #'equal :key (lambda (a) (find-layout-qualifier (first a))))))
+                         (cond ((not matching)
+                                (push (rest ast) (gethash 'declarations global-env))
+                                ast)
+                               ((matching-declarator-p matching (rest ast))
+                                (unless (equal init (fifth matching))
+                                  (warn "Mismatched initializers between duplicate variable declarations:~%  ~a~%  ~a"
+                                        (serialize `(variable-declaration ,@matching) NIL)
+                                        (serialize ast NIL)))
+                                (setf (gethash identifier global-env) (third matching))
+                                (setf (binding identifier environment) (list :variable qualifiers specifiers array))
+                                ;; We already have this declaration.
+                                NIL)
+                               (T
+                                (error "Found two mismatched declarations with the same layout qualifier:~%  ~a~%  ~a"
+                                       (serialize `(variable-declaration ,@matching) NIL)
+                                       (serialize ast NIL))))))
+                      ((gethash identifier global-env)
+                       (let ((matching (find identifier
+                                             (gethash 'declarations global-env)
+                                             :test #'equal :key #'third)))
+                         (cond ((matching-declarator-p matching (rest ast))
+                                (unless (equal init (fifth matching))
+                                  (warn "Mismatched initializers between duplicate variable declarations:~%  ~a~%  ~a"
+                                        (serialize `(variable-declaration ,@matching) NIL)
+                                        (serialize ast NIL)))
+                                (setf (gethash identifier global-env) (third matching))
+                                (setf (binding identifier environment) (list :variable qualifiers specifiers array))
+                                ;; We /probably/ already have this declaration.
+                                NIL)
+                               (T
+                                (warn "Found two mismatched declarations with the same identifier:~%  ~a~%  ~a"
+                                      (serialize `(variable-declaration ,@matching) NIL)
+                                      (serialize ast NIL))
+                                (store-identifier identifier)
+                                ast))))
+                      (T
+                       (push (rest ast) (gethash 'declarations global-env))
+                       (store-identifier identifier)
+                       ast))))
+             (T
+              (store-identifier (fourth ast))
+              ast))))))
+
+(defun handle-identifier (ast context environment global-env)
+  (or (when (global-identifier-p ast environment)
+        (if (eql 'struct-specifier (first context))
+            (gethash `(:struct ,ast) global-env)
+            (gethash ast global-env)))
+      ast))
+
+(defun split-shader-into-groups (shader)
+  (let ((groups (list 'precision-declaration ()
+                      'variable-declaration ()
+                      'struct-declaration ()
+                      'function-declaration ()
+                      'function-definition ())))
+    (flet ((walker (ast context environment)
+             (declare (ignore context))
+             (when (declaration-p ast environment)
+               (push ast (getf groups (first ast))))
+             ast))
+      (walk shader #'walker))
+    groups))
 
 (defun merge-shaders (&rest shaders)
-  (let ((*unique-counter* 0))
-    (with-output-to-string (out)
-      (let ((global-env (make-hash-table :test 'equal)))
-        (setf (gethash "main" global-env) "main")
-        (flet ((walker (ast context environment)
-                 (if (global-identifier-p ast environment)
-                     (handle-global-identifier ast context environment global-env)
-                     ast)))
-          (loop for shader in shaders
-                for *unique-counter* from 0
-                do (serialize (walk (parse shader) #'walker) out)))
-        (serialize `(shader
-                     (function-definition
-                      (function-prototype
-                       ,no-value :void "main")
-                      (compound-statement
-                       ,@(loop for shader in shaders
-                               for *unique-counter* from 0
-                               collect `(modified-reference ,(uniquify "main") (call-modifier))))))
-                   out)))))
+  (let ((*unique-counter* 0)
+        (global-env (make-hash-table :test 'equal)))
+    (flet ((walker (ast context environment)
+             (cond ((declaration-p ast environment)
+                    (handle-declaration ast context environment global-env))
+                   ((stringp ast)
+                    (handle-identifier ast context environment global-env))
+                   (T
+                    ast))))
+      (append '(shader)
+              (loop for shader in shaders
+                    for *unique-counter* from 0
+                    appending (rest (walk (parse shader) #'walker)))
+              `((function-definition
+                 (function-prototype
+                  ,no-value :void "main")
+                 (compound-statement
+                  ,@(loop for shader in shaders
+                          for *unique-counter* from 0
+                          collect `(modified-reference ,(uniquify "main") (call-modifier))))))))))
