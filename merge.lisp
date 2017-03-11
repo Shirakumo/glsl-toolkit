@@ -19,7 +19,7 @@
            :test #'equal))))
 
 (defun matching-specifiers-p (a b)
-  (null (set-difference a b :test #'equal)))
+  (equal a b))
 
 (defun matching-declarators-p (a b)
   (and (matching-qualifiers-p (first a) (first b))

@@ -127,7 +127,7 @@
   ;; parser.lisp
   (:export
    #:no-value
-   #:end-of-stream-p
+   #:end-of-tokens-p
    #:advance
    #:backtrack
    #:peek
@@ -140,6 +140,7 @@
    #:consume-any
    #:consume-notany
    #:compile-rule
+   #:v
    #:define-rule
    #:define-reference
    #:define-object
@@ -187,9 +188,9 @@
    #:remove-walker
    #:define-walker
    #:define-walking-body
+   #:define-empty-op-walker
    #:define-unary-op-walker
-   #:define-binary-op-walker
-   #:define-empty-op-walker))
+   #:define-binary-op-walker))
 
 (defpackage #:glsl-parser-rules
   (:nicknames #:org.shirakumo.trial.glsl.parser.rules)

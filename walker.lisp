@@ -179,7 +179,7 @@
            (list* ',type
                   ,@body))))))
 
-(defmacro define-empty-op-walking (type)
+(defmacro define-empty-op-walker (type)
   `(define-walking-body ,type ()
      NIL))
 
@@ -381,9 +381,9 @@
   (walk statement)
   NIL)
 
-(define-empty-op-walking continue)
-(define-empty-op-walking break)
-(define-empty-op-walking discard)
+(define-empty-op-walker continue)
+(define-empty-op-walker break)
+(define-empty-op-walker discard)
 
 (define-walking-body return (&optional value)
   (when value (list (walk value))))

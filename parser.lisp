@@ -17,10 +17,10 @@
 (deftype index ()
   `(integer 0 ,array-dimension-limit))
 
-(defun end-of-stream-p ()
+(defun end-of-tokens-p ()
   (<= (length *token-array*) *token-index*))
 
-(define-compiler-macro end-of-stream-p ()
+(define-compiler-macro end-of-tokens-p ()
   `(<= (length (the vector *token-array*))
        (the index *token-index*)))
 
@@ -50,8 +50,8 @@
   `(prog1 (peek)
      (advance)))
 
-(defmacro with-token-input (string &body body)
-  `(let ((*token-array* ,string)
+(defmacro with-token-input (vector &body body)
+  `(let ((*token-array* ,vector)
          (*token-index* 0))
      ,@body))
 
@@ -71,7 +71,7 @@
     (unintern symbol (symbol-package symbol))))
 
 (defun consume-whitespace ()
-  (loop until (end-of-stream-p)
+  (loop until (end-of-tokens-p)
         for char = (peek)
         do (if (or (char= char #\Space)
                    (char= char #\Newline))
@@ -81,19 +81,19 @@
 (defun consume-string (string)
   (let ((start *token-index*))
     (loop for comp across string
-          do (when (or (end-of-stream-p)
+          do (when (or (end-of-tokens-p)
                        (char/= comp (consume)))
                (setf *token-index* start)
                (return NIL))
           finally (return string))))
 
 (defun consume-any (choices)
-  (unless (end-of-stream-p)
+  (unless (end-of-tokens-p)
     (when (find (peek) choices)
       (consume))))
 
 (defun consume-notany (choices)
-  (unless (end-of-stream-p)
+  (unless (end-of-tokens-p)
     (unless (find (peek) choices)
       (consume))))
 
@@ -101,12 +101,12 @@
   (etypecase rule
     (null)
     (keyword
-     `(when (and (not (end-of-stream-p)) (eq ,rule (peek)))
+     `(when (and (not (end-of-tokens-p)) (eq ,rule (peek)))
         (consume)))
     (symbol
      `(,(intern (string rule) '#:org.shirakumo.trial.glsl.parser.rules)))
     (character
-     `(when (and (not (end-of-stream-p)) (eql ,rule (peek)))
+     `(when (and (not (end-of-tokens-p)) (eql ,rule (peek)))
         (consume)))
     (string
      `(consume-string ,rule))
@@ -123,7 +123,7 @@
        (when `(when ,(compile-rule (second rule))
                 ,@(mapcar #'compile-rule (cddr rule))))
        (v `(v ,(compile-rule (second rule))))
-       (* `(loop until (end-of-stream-p)
+       (* `(loop until (end-of-tokens-p)
                  while ,(compile-rule (second rule))
                  finally (return T)))
        (+ (compile-rule `(and ,(second rule) (* ,(second rule)))))
