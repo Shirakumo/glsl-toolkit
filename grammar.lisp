@@ -328,9 +328,11 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
            (v variable-initializer) (* (and :\, (v variable-initializer)))
            :\;)
   (destructuring-bind (qualifier specifier &rest initializers) v
-    (list* 'multiple-statements
-           (loop for initializer in initializers
-                 collect (list* 'variable-declaration qualifier specifier initializer)))))
+    (if (rest initializers)
+        (list* 'multiple-statements
+               (loop for initializer in initializers
+                     collect (list* 'variable-declaration qualifier specifier initializer)))
+        (list* 'variable-declaration qualifier specifier (first initializers)))))
 
 (define-object variable-initializer
       (and (v identifier) (v (? array-specifier)) (? (v (and := initializer))))
