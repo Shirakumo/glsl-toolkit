@@ -203,7 +203,7 @@ See *TOKEN-INDEX*")
 See PEEK
 See ADVANCE")
 
-  (function with-token-index
+  (function with-token-input
     "Readies the environment for token parsing.
 
 This binds *TOKEN-ARRAY* to the given vector and binds *TOKEN-INDEX* to 0.
