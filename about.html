@@ -120,7 +120,11 @@ See ENVIRONMENT</pre> </article> </li><li> <a name="GLSL-TOOLKIT:RULE"> </a> <ar
 This is a place that can be set with the function object
 that should be used to parse the rule of the given name.
 
-If no such rule exists, an error is signalled.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:SERIALIZER"> </a> <article> <header class="accessor"> <span class="type">accessor</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SERIALIZER">SERIALIZER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:WALKER"> </a> <article> <header class="accessor"> <span class="type">accessor</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:WALKER">WALKER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring">Accessor to the walker function for AST objects of the given type.
+If no such rule exists, an error is signalled.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:SERIALIZER"> </a> <article> <header class="accessor"> <span class="type">accessor</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SERIALIZER">SERIALIZER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring">Accessor to the serializing function for AST objects of the given type.
+
+See *SERIALIZERS*
+See DEFINE-SERIALIZER
+See REMOVE-SERIALIZER</pre> </article> </li><li> <a name="GLSL-TOOLKIT:WALKER"> </a> <article> <header class="accessor"> <span class="type">accessor</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:WALKER">WALKER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring">Accessor to the walker function for AST objects of the given type.
 
 See *WALKERS*
 See REMOVE-WALKER
@@ -196,7 +200,7 @@ elements are EQUAL. Strings and bit-vectors are EQUAL if they are the same
 length and have identical components. Other arrays must be EQ to be EQUAL.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:EXPRESSION-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:EXPRESSION-P">EXPRESSION-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is an expression.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:FUNCTION-IDENTIFIER-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:FUNCTION-IDENTIFIER-P">FUNCTION-IDENTIFIER-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is an identifier for a function.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:GLOBAL-IDENTIFIER-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:GLOBAL-IDENTIFIER-P">GLOBAL-IDENTIFIER-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is an identifier that refers to a global definition.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:IDENTIFIER-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:IDENTIFIER-P">IDENTIFIER-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node might be an identifier.
 
 This is not always accurate, as some identifiers can also be
-types at the same time. It thus depends on the context.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:INDENT"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:INDENT">INDENT</a></code></h4> <code class="qualifiers"></code> <code class="arguments"></code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:KEYWORD-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:KEYWORD-P">KEYWORD-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is a GLSL keyword.
+types at the same time. It thus depends on the context.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:INDENT"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:INDENT">INDENT</a></code></h4> <code class="qualifiers"></code> <code class="arguments"></code><code>)</code>  </header> <pre class="docstring">Starts a fresh line and emits as many spaces as the *INDENT* variable dictates.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:KEYWORD-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:KEYWORD-P">KEYWORD-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is a GLSL keyword.
 
 See *GLSL-KEYWORD-SYMBOLS*</pre> </article> </li><li> <a name="GLSL-TOOLKIT:LEX"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:LEX">LEX</a></code></h4> <code class="qualifiers"></code> <code class="arguments">INPUT &amp;OPTIONAL (TOPLEVEL-RULE 'TOKENIZE)</code><code>)</code>  </header> <pre class="docstring">Lex the input string into a token array for use in parsing.
 
@@ -229,7 +233,22 @@ In order to match, the two lists have to be EQUAL.</pre> </article> </li><li> <a
 
 See PARSE
 See MERGE-SHADERS
-See SERIALIZE</pre> </article> </li><li> <a name="GLSL-TOOLKIT:MERGE-SHADERS"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:MERGE-SHADERS">MERGE-SHADERS</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST SHADERS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:NORMALIZE-SHADER-SOURCE"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:NORMALIZE-SHADER-SOURCE">NORMALIZE-SHADER-SOURCE</a></code></h4> <code class="qualifiers"></code> <code class="arguments">INPUT</code><code>)</code>  </header> <pre class="docstring">Attempts to normalise the shader source code.
+See SERIALIZE</pre> </article> </li><li> <a name="GLSL-TOOLKIT:MERGE-SHADERS"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:MERGE-SHADERS">MERGE-SHADERS</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST SHADERS</code><code>)</code>  </header> <pre class="docstring">Merge the given shader ASTs into a single AST.
+
+The top-level AST nodes must be AST objects of type SHADER.
+
+The merging will attempt to conflate declarations where
+possible and rename variables where necessary, in order to
+create a single shader that is internally consistent.
+
+It also emits a single main function at the end, which
+does nothing but call the main function of each
+sub-shader in the sequence that the shaders were passed.
+
+See HANDLE-DECLARATION
+See HANDLE-IDENTIFIER
+See WALK
+See MERGE-SHADER-SOURCES</pre> </article> </li><li> <a name="GLSL-TOOLKIT:NORMALIZE-SHADER-SOURCE"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:NORMALIZE-SHADER-SOURCE">NORMALIZE-SHADER-SOURCE</a></code></h4> <code class="qualifiers"></code> <code class="arguments">INPUT</code><code>)</code>  </header> <pre class="docstring">Attempts to normalise the shader source code.
 
 This does the following:
 - Removes any and all comments from the code
@@ -259,13 +278,39 @@ See LEX
 See RULE</pre> </article> </li><li> <a name="GLSL-TOOLKIT:PEEK"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:PEEK">PEEK</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;OPTIONAL (OFFSET 0)</code><code>)</code>  </header> <pre class="docstring">Returns the token at the index relative to the current position.
 
 See *TOKEN-ARRAY*
-See *TOKEN-INDEX*</pre> </article> </li><li> <a name="GLSL-TOOLKIT:PREPROCESSOR-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:PREPROCESSOR-P">PREPROCESSOR-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is a preprocessor instruction.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:REMOVE-RULE"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:REMOVE-RULE">REMOVE-RULE</a></code></h4> <code class="qualifiers"></code> <code class="arguments">NAME</code><code>)</code>  </header> <pre class="docstring">Removes the parsing rule of the given name.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:REMOVE-SERIALIZER"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:REMOVE-SERIALIZER">REMOVE-SERIALIZER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:REMOVE-WALKER"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:REMOVE-WALKER">REMOVE-WALKER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring">Removes the walker function for AST objects of the given type.
+See *TOKEN-INDEX*</pre> </article> </li><li> <a name="GLSL-TOOLKIT:PREPROCESSOR-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:PREPROCESSOR-P">PREPROCESSOR-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is a preprocessor instruction.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:REMOVE-RULE"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:REMOVE-RULE">REMOVE-RULE</a></code></h4> <code class="qualifiers"></code> <code class="arguments">NAME</code><code>)</code>  </header> <pre class="docstring">Removes the parsing rule of the given name.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:REMOVE-SERIALIZER"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:REMOVE-SERIALIZER">REMOVE-SERIALIZER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring">Removes the serializer function for AST objects of the given type.
+
+See *SERIALIZERS*
+See SERIALIZER</pre> </article> </li><li> <a name="GLSL-TOOLKIT:REMOVE-WALKER"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:REMOVE-WALKER">REMOVE-WALKER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">TYPE</code><code>)</code>  </header> <pre class="docstring">Removes the walker function for AST objects of the given type.
 
 See WALKER
 See *WALKERS*</pre> </article> </li><li> <a name="GLSL-TOOLKIT:ROOT-ENVIRONMENT-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:ROOT-ENVIRONMENT-P">ROOT-ENVIRONMENT-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the environment is a top-level root environment.
 
 See ENVIRONMENT
-See ROOT</pre> </article> </li><li> <a name="GLSL-TOOLKIT:SERIALIZE"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SERIALIZE">SERIALIZE</a></code></h4> <code class="qualifiers"></code> <code class="arguments">PART &amp;OPTIONAL TO</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:SERIALIZE-PART"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SERIALIZE-PART">SERIALIZE-PART</a></code></h4> <code class="qualifiers"></code> <code class="arguments">PART</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:SFORMAT"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SFORMAT">SFORMAT</a></code></h4> <code class="qualifiers"></code> <code class="arguments">STRING &amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:STATEMENT-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:STATEMENT-P">STATEMENT-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is a statement.
+See ROOT</pre> </article> </li><li> <a name="GLSL-TOOLKIT:SERIALIZE"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SERIALIZE">SERIALIZE</a></code></h4> <code class="qualifiers"></code> <code class="arguments">PART &amp;OPTIONAL TO</code><code>)</code>  </header> <pre class="docstring">Serializes the AST part to shader source.
+
+TO may be one of the following:
+- NULL
+  The output is gathered into a string and returned.
+- T
+  The output is sent to *STANDARD-OUTPUT*.
+- STREAM
+  The output is sent to this stream.
+- PATHNAME
+  The output is written to the file. If the file already
+  exists, an error is signalled.
+
+See *SERIALIZE-STREAM*
+See SERIALIZE-PART</pre> </article> </li><li> <a name="GLSL-TOOLKIT:SERIALIZE-PART"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SERIALIZE-PART">SERIALIZE-PART</a></code></h4> <code class="qualifiers"></code> <code class="arguments">PART</code><code>)</code>  </header> <pre class="docstring">Serializes the AST part.
+
+This appropriately handles all values that can be contained in the AST.
+For AST objects, an appropriate serializer function is called if possible.
+Should an unknown AST object occur, an error is signalled.
+
+See SERIALIZER</pre> </article> </li><li> <a name="GLSL-TOOLKIT:SFORMAT"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:SFORMAT">SFORMAT</a></code></h4> <code class="qualifiers"></code> <code class="arguments">STRING &amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Convenience function used to format to the serializing stream.
+
+A special format directive ~O is provided as well, which
+causes SERIALIZE-PART to be called on the respective object.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:STATEMENT-P"> </a> <article> <header class="function"> <span class="type">function</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:STATEMENT-P">STATEMENT-P</a></code></h4> <code class="qualifiers"></code> <code class="arguments">VALUE ENVIRONMENT</code><code>)</code>  </header> <pre class="docstring">Returns T if the given AST node is a statement.
 
 See DECLARATION-P
 See EXPRESSION-P
@@ -357,7 +402,14 @@ re-interning the symbol in that package.
 A default lexical binding named V is provided.
 
 See DEFINE-REFERENCE
-See DEFINE-OBJECT</pre> </article> </li><li> <a name="GLSL-TOOLKIT:DEFINE-SERIALIZATION"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:DEFINE-SERIALIZATION">DEFINE-SERIALIZATION</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:DEFINE-SERIALIZER"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:DEFINE-SERIALIZER">DEFINE-SERIALIZER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:DEFINE-UNARY-OP-WALKER"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:DEFINE-UNARY-OP-WALKER">DEFINE-UNARY-OP-WALKER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Define a walker for a unary AST object.
+See DEFINE-OBJECT</pre> </article> </li><li> <a name="GLSL-TOOLKIT:DEFINE-SERIALIZATION"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:DEFINE-SERIALIZATION">DEFINE-SERIALIZATION</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Convenience function to define the serialization of AST objects of the given type.
+
+ARGS must be a lambda-list to destructure the contents of the
+AST object.
+
+See SERIALIZER</pre> </article> </li><li> <a name="GLSL-TOOLKIT:DEFINE-SERIALIZER"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:DEFINE-SERIALIZER">DEFINE-SERIALIZER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Convenience function to define a serializer function for AST objects of the given type.
+
+See SERIALIZER</pre> </article> </li><li> <a name="GLSL-TOOLKIT:DEFINE-UNARY-OP-WALKER"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:DEFINE-UNARY-OP-WALKER">DEFINE-UNARY-OP-WALKER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Define a walker for a unary AST object.
 
 This walker recurses over the single node in the object
 and returns a fresh value constructed from it.</pre> </article> </li><li> <a name="GLSL-TOOLKIT:DEFINE-WALKER"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:DEFINE-WALKER">DEFINE-WALKER</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Define a new walker function that is responsible for walking over a particular type of AST object node.
@@ -387,4 +439,12 @@ walk function, and the environment by changing the type to a
 list and providing the binding symbols as keyword arguments in
 it with :KEY :FUNC and :ENV.
 
-See DEFINE-WALKER</pre> </article> </li><li> <a name="GLSL-TOOLKIT:RETURN"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:RETURN">RETURN</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:WITH-INDENTATION"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:WITH-INDENTATION">WITH-INDENTATION</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:WITH-TOKEN-INPUT"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:WITH-TOKEN-INPUT">WITH-TOKEN-INPUT</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li></ul> </li></ul> </article>  </main> </body> </html> 
+See DEFINE-WALKER</pre> </article> </li><li> <a name="GLSL-TOOLKIT:RETURN"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:RETURN">RETURN</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring"/> </article> </li><li> <a name="GLSL-TOOLKIT:WITH-INDENTATION"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:WITH-INDENTATION">WITH-INDENTATION</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Makes sure the body is evaluated with an increased indentation level.
+
+See *INDENT*
+See INDENT</pre> </article> </li><li> <a name="GLSL-TOOLKIT:WITH-TOKEN-INPUT"> </a> <article> <header class="macro"> <span class="type">macro</span>  <code>(</code><h4 class="name"><code><a href="#GLSL-TOOLKIT:WITH-TOKEN-INPUT">WITH-TOKEN-INPUT</a></code></h4> <code class="qualifiers"></code> <code class="arguments">&amp;REST ARGS</code><code>)</code>  </header> <pre class="docstring">Readies the environment for token parsing.
+
+This binds *TOKEN-ARRAY* to the given vector and binds *TOKEN-INDEX* to 0.
+
+See *TOKEN-ARRAY*
+See *TOKEN-INDEX*</pre> </article> </li></ul> </li></ul> </article>  </main> </body> </html> 
