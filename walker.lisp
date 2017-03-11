@@ -183,6 +183,8 @@
           (mapcar* #'walk fields))
          (array-initializer (&rest initializers)
           (mapcar* #'walk initializers))
+         (multiple-statements (&rest statements)
+          (mapcar* #'walk statements))
          (compound-statement (&rest statements)
           (let ((environment (make-environment environment)))
             (loop for statement in statements

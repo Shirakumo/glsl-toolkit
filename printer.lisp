@@ -189,11 +189,8 @@
                  qualifier specifier identifier parameters))
        (precision-declarator (precision type)
         (sformat "precision ~o ~o" precision type))
-       (variable-declaration (qualifier specifier &rest initializers)
-        (sformat "~o~o" qualifier specifier)
-        (loop for (init . rest) on initializers
-              for (identifier array initializer) = init
-              do (sformat " ~o~o~@[ = ~o~]~@[,~]" identifier array initializer rest)))
+       (variable-declaration (qualifier specifier identifier array &optional initializer)
+        (sformat "~o~o ~o~o~@[ = ~o~]" qualifier specifier identifier array initializer))
        (layout-qualifier (&rest ids)
         (sformat "layout(~{~o~^, ~})" ids))
        (layout-qualifier-id (identifier &optional value)
@@ -216,6 +213,11 @@
         (sformat "~o~o~{~{~o~^ ~}~^, ~};" qualifier specifier fields))
        (array-initializer (initializer &rest initializers)
         (sformat "{~o~{, ~o~}}" initializer initializers))
+       (multiple-statements (&optional statement &rest statements)
+        (when statement
+          (sformat "~o" statement)
+          (loop for statement in statements
+                do (sformat ";") (indent) (sformat "~o" statement))))
        (compound-statement (&rest statements)
         (sformat "{")
         (with-indentation ()

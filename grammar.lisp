@@ -305,7 +305,7 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
 (define-reference declaration
   (or function-declaration
       variable-declaration
-      precision-declarator
+      precision-declaration
       struct-declaration))
 
 (define-object function-declaration
@@ -320,13 +320,17 @@ Author: Nicolas Hafner <shinmera@tymoon.eu>
            (? (v identifier)) (? (v array-specifier)))
   v)
 
-(define-object precision-declarator
+(define-object precision-declaration
       (and :precision (v (or :highp :mediump :lowp)) (v type-specifier) :\;))
 
 (define-object variable-declaration
       (and (v (? type-qualifier)) (v type-specifier)
            (v variable-initializer) (* (and :\, (v variable-initializer)))
-           :\;))
+           :\;)
+  (destructuring-bind (qualifier specifier &rest initializers) v
+    (list* 'multiple-statements
+           (loop for initializer in initializers
+                 collect (list* 'variable-declaration qualifier specifier initializer)))))
 
 (define-object variable-initializer
       (and (v identifier) (v (? array-specifier)) (? (v (and := initializer))))
