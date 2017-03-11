@@ -149,8 +149,8 @@
          (variable-declaration (qualifier specifier &rest initializers)
           qualifier specifier
           (loop for (identifier array init) in initializers
-                do (setf (binding identifier environment)
-                         (list :variable qualifier specifier array))
+                for nothing = (setf (binding identifier environment)
+                                    (list :variable qualifier specifier array))
                 for item = (walk identifier)
                 when item collect (list item array init)))
          (layout-qualifier (&rest ids)
