@@ -31,6 +31,9 @@
            ))
     environment))
 
+(defun root-environment-p (environment)
+  (eql environment (root environment)))
+
 (defun constant-p (value environment)
   (declare (ignore environment))
   (or (integerp value)
