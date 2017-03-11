@@ -21,7 +21,7 @@
 (defun matching-specifiers-p (a b)
   (null (set-difference a b :test #'equal)))
 
-(defun matching-declarator-p (a b)
+(defun matching-declarators-p (a b)
   (and (matching-qualifiers-p (first a) (first b))
        (matching-specifiers-p (second a) (second b))
        (equal (fourth a) (fourth a))))
@@ -65,7 +65,7 @@
                          (cond ((not matching)
                                 (push (rest ast) (gethash 'declarations global-env))
                                 ast)
-                               ((matching-declarator-p matching (rest ast))
+                               ((matching-declarators-p matching (rest ast))
                                 (unless (equal init (fifth matching))
                                   (warn "Mismatched initializers between duplicate variable declarations:~%  ~a~%  ~a"
                                         (serialize `(variable-declaration ,@matching) NIL)
@@ -82,7 +82,7 @@
                        (let ((matching (find identifier
                                              (gethash 'declarations global-env)
                                              :test #'equal :key #'third)))
-                         (cond ((matching-declarator-p matching (rest ast))
+                         (cond ((matching-declarators-p matching (rest ast))
                                 (unless (equal init (fifth matching))
                                   (warn "Mismatched initializers between duplicate variable declarations:~%  ~a~%  ~a"
                                         (serialize `(variable-declaration ,@matching) NIL)
@@ -139,7 +139,7 @@
       (append '(shader)
               (loop for shader in shaders
                     for *unique-counter* from 0
-                    appending (rest (walk (parse shader) #'walker)))
+                    appending (rest (walk shader #'walker)))
               `((function-definition
                  (function-prototype
                   ,no-value :void "main")
@@ -147,3 +147,6 @@
                   ,@(loop for shader in shaders
                           for *unique-counter* from 0
                           collect `(modified-reference ,(uniquify "main") (call-modifier))))))))))
+
+(defun merge-shader-sources (sources &optional to)
+  (serialize (apply #'merge-shaders (mapcar #'parse sources)) to))

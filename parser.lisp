@@ -55,8 +55,6 @@
          (*token-index* 0))
      ,@body))
 
-(defvar *rules* (make-hash-table :test 'eql))
-
 (defun rule (name)
   (or (find-symbol (string name) '#:org.shirakumo.trial.glsl.parser.rules)
       (error "No rule named ~s is known." name)))
