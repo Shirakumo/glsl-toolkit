@@ -1,10 +1,10 @@
 #|
- This file is a part of glsl-parser
+ This file is a part of glsl-toolkit
  (c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
  Author: Nicolas Hafner <shinmera@tymoon.eu>
 |#
 
-(in-package #:org.shirakumo.trial.glsl.parser)
+(in-package #:org.shirakumo.trial.glsl)
 
 (defstruct (environment (:conc-name NIL)
                         (:constructor %make-environment)
@@ -174,7 +174,7 @@
                                  (env (gensym "ENV"))) (enlist type)
     `(define-walker ,type (,ast ,func ,env)
        (flet ((walk (node &optional (,env ,env))
-                (walk-inner node ,ast ,func ,env)))
+                (walk-part node ,ast ,func ,env)))
          (destructuring-bind ,args (rest ,ast)
            (list* ',type
                   ,@body))))))

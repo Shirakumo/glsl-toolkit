@@ -1,10 +1,10 @@
 #|
-This file is a part of glsl-parser
-(c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
-Author: Nicolas Hafner <shinmera@tymoon.eu>
+ This file is a part of glsl-toolkit
+ (c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
+ Author: Nicolas Hafner <shinmera@tymoon.eu>
 |#
 
-(in-package #:org.shirakumo.trial.glsl.parser)
+(in-package #:org.shirakumo.trial.glsl)
 
 ;; grammar.lisp
 (docs:define-docs
@@ -298,7 +298,7 @@ See DEFINE-RULE")
     "Defines a new parsing rule of the given name.
 
 This will create a function definition in the
-ORG.SHIRAKUMO.TRIAL.GLSL.PARSER.RULES package by
+ORG.SHIRAKUMO.TRIAL.GLSL.RULES package by
 re-interning the symbol in that package.
 
 A default lexical binding named V is provided.

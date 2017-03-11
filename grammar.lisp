@@ -1,10 +1,10 @@
 #|
-This file is a part of glsl-parser
-(c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
-Author: Nicolas Hafner <shinmera@tymoon.eu>
+ This file is a part of glsl-toolkit
+ (c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
+ Author: Nicolas Hafner <shinmera@tymoon.eu>
 |#
 
-(in-package #:org.shirakumo.trial.glsl.parser)
+(in-package #:org.shirakumo.trial.glsl)
 
 ;;; Lexer
 (define-reference whitespace

@@ -1,10 +1,10 @@
 #|
- This file is a part of glsl-parser
+ This file is a part of glsl-toolkit
  (c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
  Author: Nicolas Hafner <shinmera@tymoon.eu>
 |#
 
-(in-package #:org.shirakumo.trial.glsl.parser)
+(in-package #:org.shirakumo.trial.glsl)
 
 (defvar *serialize-stream*)
 
@@ -53,7 +53,7 @@
       (loop for i from 0 below (length string)
             do (cond ((and (char= #\~ (char string i))
                            (char= #\o (char string (1+ i))))
-                      (write-string "~/ORG.SHIRAKUMO.TRIAL.GLSL.PARSER::%FORMAT-OBJECT/" out)
+                      (write-string "~/ORG.SHIRAKUMO.TRIAL.GLSL::%FORMAT-OBJECT/" out)
                       (incf i))
                      (T
                       (write-char (char string i) out)))))))

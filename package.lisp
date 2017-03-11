@@ -1,13 +1,13 @@
 #|
- This file is a part of glsl-parser
+ This file is a part of glsl-toolkit
  (c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
  Author: Nicolas Hafner <shinmera@tymoon.eu>
 |#
 
 (in-package #:cl-user)
 
-(defpackage #:glsl-parser
-  (:nicknames #:org.shirakumo.trial.glsl.parser)
+(defpackage #:glsl-toolkit
+  (:nicknames #:org.shirakumo.trial.glsl)
   (:use #:cl)
   ;; grammar.lisp
   (:export

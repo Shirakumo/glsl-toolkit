@@ -1,10 +1,10 @@
 #|
- This file is a part of glsl-parser
+ This file is a part of glsl-toolkit
  (c) 2017 Shirakumo http://tymoon.eu (shinmera@tymoon.eu)
  Author: Nicolas Hafner <shinmera@tymoon.eu>
 |#
 
-(in-package #:org.shirakumo.trial.glsl.parser)
+(in-package #:org.shirakumo.trial.glsl)
 
 (defun enlist (list &rest items)
   (if (listp list) list (list* list items)))
