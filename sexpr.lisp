@@ -178,15 +178,20 @@
   (let ((qualifiers ())
         (specifiers ()))
     (dolist (type (enlist types))
-      (if (or (find type '(:invariant :smooth :flat :noperspective
-                           :precise :const :inout :in :out :centroid
-                           :patch :sample :uniform :buffer :shared
-                           :coherent :volatile :restrict :readonly
-                           :writeonly :highp :mediump :lowp))
-              (and (consp type) (find (first type) '(layout-qualifier
-                                                     subroutine-qualifier))))
-          (push type qualifiers)
-          (push type specifiers)))
+      (cond ((consp type)
+             (push (ecase (first type)
+                     (layout `(layout-qualifier ,(rest type)))
+                     (subroutine `(subroutine-qualifier ,(second type))))
+                   qualifiers))
+            ((find type '(:invariant :smooth :flat :noperspective
+                          :precise :const :inout :in :out :centroid
+                          :patch :sample :uniform :buffer :shared
+                          :coherent :volatile :restrict :readonly
+                          :writeonly :highp :mediump :lowp)
+                   :test #'string=)
+             (push (intern (string type) :keyword) qualifiers))
+            (T
+             (push (intern (string type) :keyword) specifiers))))
     (values (nreverse qualifiers)
             (nreverse specifiers))))
 
@@ -214,7 +219,8 @@
                        (type-specifier ,@specifiers)
                        ,(r identifier)
                        ,@(loop for (type ident &optional array) in arglist
-                               collect `((type-specifier ,type) ,(r ident)
+                               collect `((type-specifier ,(intern (string type) :keyword))
+                                         ,(r ident)
                                          ,@(when array (list array))))))))
     (if body
         `(function-definition
