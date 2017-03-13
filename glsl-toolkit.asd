@@ -20,6 +20,7 @@
                (:file "printer")
                (:file "walker")
                (:file "merge")
+               (:file "sexpr")
                (:file "documentation"))
   :depends-on (:documentation-utils
                :parse-float

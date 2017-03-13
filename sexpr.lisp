@@ -17,7 +17,7 @@
 
 (defun sexpr->glsl-ast (form)
   (etypecase form
-    ((or integer float keyword string)
+    ((or null integer float keyword string)
      form)
     (symbol
      (symbol->identifier form))
@@ -28,9 +28,9 @@
               form))))
 
 (defmacro with-glsl-syntax (&body forms)
-  (with-output-to-string (out)
-    (dolist (form forms)
-      (serialize (sexpr->glsl-ast form) out))))
+  (serialize
+   `(shader
+     ,@(mapcar #'sexpr->glsl-ast forms))))
 
 (defvar *sexpr-transforms* (make-hash-table :test 'eql))
 
@@ -50,7 +50,7 @@
                     (flet ((r (form)
                              (sexpr->glsl-ast form)))
                       (declare (ignorable #'r))
-                      (destructuring-bind ,args ,o
+                      (destructuring-bind ,args (rest ,o)
                         ,@body))))
             ',op)))
 
@@ -66,7 +66,7 @@
 (define-sexpr-transform - (first &rest values)
   (cond (values
          `(subtraction ,(r first)
-                       ,(r `(+ ,@(rest values)))))
+                       ,(r `(+ ,@values))))
         (T
          `(negation ,(r first)))))
 
@@ -82,7 +82,7 @@
 (define-sexpr-transform / (first &rest values)
   (cond (values
          `(division ,(r first)
-                       ,(r `(* ,@(rest values)))))
+                       ,(r `(* ,@values))))
         (T
          `(division 1.0 ,(r first)))))
 
@@ -175,33 +175,47 @@
   `(break))
 
 (defun separate-qualifier-specifier (types)
-  (values NIL NIL))
+  (let ((qualifiers ())
+        (specifiers ()))
+    (dolist (type (enlist types))
+      (if (or (find type '(:invariant :smooth :flat :noperspective
+                           :precise :const :inout :in :out :centroid
+                           :patch :sample :uniform :buffer :shared
+                           :coherent :volatile :restrict :readonly
+                           :writeonly :highp :mediump :lowp))
+              (and (consp type) (find (first type) '(layout-qualifier
+                                                     subroutine-qualifier))))
+          (push type qualifiers)
+          (push type specifiers)))
+    (values (nreverse qualifiers)
+            (nreverse specifiers))))
+
+(define-sexpr-transform defvar (type ident &optional value)
+  (multiple-value-bind (qualifiers specifiers)
+      (separate-qualifier-specifier type)
+    `(variable-declaration
+      ,(if qualifiers `(type-qualifier ,@qualifiers) no-value)
+      (type-specifier ,@specifiers)
+      ,(r ident)
+      ,no-value
+      ,value)))
 
 (define-sexpr-transform let (bindings &body body)
   `(compound-statement
-    ,@(loop for (type ident &optional value) in bindings
-            collect (multiple-value-bind (qualifiers specifiers)
-                        (separate-qualifier-specifier type)
-                      `(variable-declaration
-                        (type-qualifier ,@qualifiers)
-                        (type-specifier ,@specifiers)
-                        ,(r ident)
-                        ,no-value
-                        ,(or value no-value))))
+    ,@(loop for binding in bindings
+            collect (r `(defvar ,@binding)))
     ,@(mapcar #'r body)))
 
 (define-sexpr-transform defun (identifier arglist type &body body)
-  (let ((prototype (multiple-value-bind (qualifiers specifiers) type
+  (let ((prototype (multiple-value-bind (qualifiers specifiers)
+                       (separate-qualifier-specifier type)
                      `(function-prototype
                        (type-qualifier ,@qualifiers)
-                       (type-specifiers ,@specifiers)
+                       (type-specifier ,@specifiers)
                        ,(r identifier)
-                       ,@(loop for spec in arglist
-                               collect (multiple-value-bind (qualifiers specifiers)
-                                           (separate-qualifier-specifier (butlast spec))
-                                         `((type-qualifier ,@qualifiers)
-                                           (type-specifier ,@specifiers)
-                                           ,(r (car (last spec))))))))))
+                       ,@(loop for (type ident &optional array) in arglist
+                               collect `((type-specifier ,type) ,(r ident)
+                                         ,@(when array (list array))))))))
     (if body
         `(function-definition
           ,prototype
