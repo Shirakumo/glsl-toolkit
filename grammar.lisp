@@ -96,7 +96,7 @@
   (first v))
 
 (define-object identifier
-      (stringp (peek))
+    (and (not (end-of-tokens-p)) (stringp (peek)))
   (consume))
 
 (define-object preprocessor-directive
