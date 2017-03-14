@@ -175,50 +175,60 @@
     (string (with-input-from-string (stream input)
               (normalize-shader-source stream)))
     (stream
-     (with-output-to-string (output)
-       (loop for char = (read-char input NIL)
-             while char
-             do (case char
-                  ;; Handle backslash escape
-                  (#\\
-                   (cond ((newline-p (peek-char NIL input NIL))
-                          (read-char input)
-                          (when (newline-p (peek-char NIL input NIL))
-                            (read-char input)))
-                         (T
-                          (error "Illegal backslash without newline."))))
-                  ;; Handle newline behaviour and such
-                  ((#\Return #\Linefeed)
-                   (when (newline-p (peek-char NIL input NIL))
-                     (read-char input))
-                   (write-char #\Newline output))
-                  ;; Handle comments
-                  (#\/
-                   (case (peek-char NIL input)
-                     (#\/ (loop for prev = #\  then char
-                                for char = (read-char input NIL)
-                                until (or (not char)
-                                          (and (not (char= #\\ prev))
-                                               (newline-p char))))
-                      (write-char #\Newline output))
-                     (#\* (loop for prev = #\  then char
-                                for char = (read-char input)
-                                until (and (char= #\* prev)
-                                           (char= #\/ char))))
-                     (T (write-char char output))))
-                  ;; Handle consecutive whitespace
-                  ((#\Tab #\Space)
-                   (loop for char = (read-char input NIL)
-                         while (or (eql char #\Tab)
-                                   (eql char #\Space))
-                         finally (when char (unread-char char input)))
-                   (write-char #\Space output))
-                  ;; Handle other chars
-                  (T (write-char char output))))))))
+     (string-trim
+      '(#\Newline #\Space)
+      (with-output-to-string (output)
+        (loop for char = (read-char input NIL)
+              while char
+              do (case char
+                   ;; Handle backslash escape
+                   (#\\
+                    (cond ((newline-p (peek-char NIL input NIL))
+                           (read-char input)
+                           (when (newline-p (peek-char NIL input NIL))
+                             (read-char input)))
+                          (T
+                           (error "Illegal backslash without newline."))))
+                   ;; Handle newline behaviour and such
+                   ((#\Return #\Linefeed)
+                    (when (newline-p (peek-char NIL input NIL))
+                      (read-char input))
+                    (write-char #\Newline output))
+                   ;; Handle comments
+                   (#\/
+                    (case (peek-char NIL input)
+                      (#\/ (loop for prev = #\  then char
+                                 for char = (read-char input NIL)
+                                 until (or (not char)
+                                           (and (not (char= #\\ prev))
+                                                (newline-p char))))
+                       (write-char #\Newline output))
+                      (#\* (loop for prev = #\  then char
+                                 for char = (read-char input)
+                                 until (and (char= #\* prev)
+                                            (char= #\/ char))))
+                      (T (write-char char output))))
+                   ;; Handle consecutive whitespace
+                   ((#\Tab #\Space)
+                    (loop for char = (read-char input NIL)
+                          while (or (eql char #\Tab)
+                                    (eql char #\Space))
+                          finally (when char (unread-char char input)))
+                    (write-char #\Space output))
+                   ;; Handle other chars
+                   (T (write-char char output)))))))))
+
+(defun check-parse-complete (toplevel-rule)
+  (when (/= *token-index* (length *token-array*))
+    (cerror "Ignore the failure."
+            "The parse rule ~a did not consume all of the tokens.~%~
+             It is likely that it failed somewhere around ~a (position ~d)"
+            toplevel-rule (peek) *token-index*)))
 
 (defun lex (input &optional (toplevel-rule 'tokenize))
   (with-token-input (normalize-shader-source input)
-    (funcall (rule toplevel-rule))))
+    (prog1 (funcall (rule toplevel-rule))
+      (check-parse-complete toplevel-rule))))
 
 (defun parse (input &optional (toplevel-rule 'shader))
   (etypecase input
@@ -228,7 +238,8 @@
      (parse (coerce input 'vector) toplevel-rule))
     (vector
      (with-token-input input
-       (funcall (rule toplevel-rule))))))
+       (prog1 (funcall (rule toplevel-rule))
+         (check-parse-complete toplevel-rule))))))
 
 (defvar *traced* (make-hash-table :test 'eql))
 (defvar *trace-level* 0)
