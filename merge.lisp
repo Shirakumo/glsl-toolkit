@@ -34,7 +34,8 @@
   (find 'layout-qualifier qualifiers :key (lambda (a) (if (listp a) (first a) a))))
 
 (defun find-direction-qualifier (qualifiers)
-  (find-any '(:in :out :inout) qualifiers))
+  (unless (eql no-value qualifiers)
+    (find-any '(:in :out :inout) qualifiers)))
 
 (defun find-matching-layout-declaration (qualifiers declarations)
   (find (find-layout-qualifier qualifiers)
