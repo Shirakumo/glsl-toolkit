@@ -316,4 +316,5 @@
           (T
            (indent)
            (serialize-part item)
-           (sformat ";")))))
+           (unless (eql 'function-definition (first item))
+             (sformat ";"))))))
