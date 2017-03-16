@@ -322,10 +322,11 @@
   (walk identifier)
   (mapcar* #'walk declarators))
 
-(define-walking-body struct-declarator (qualifier specifier &rest fields)
+(define-walking-body struct-declarator (qualifier specifier identifier &optional array)
   qualifier
   specifier
-  (mapcar* #'walk fields))
+  (walk identifier)
+  (when array (list array)))
 
 (define-walking-body array-initializer (&rest initializers)
   (mapcar* #'walk initializers))

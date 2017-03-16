@@ -405,7 +405,13 @@
       (and :struct (v identifier)))
 
 (define-object struct-declaration
-      (and :struct (v (? identifier)) (? (and :\{ (+ (v struct-declarator)) :\}))))
+      (and :struct (v (? identifier)) (? (and :\{ (+ (v struct-declarator)) :\})))
+  `(struct-declaration
+    ,(first v)
+    ,@(loop for declarator in (rest v)
+            for (qualifier specifier . fields) = (rest declarator)
+            appending (loop for field in fields
+                            collect (list* 'struct-declarator qualifier specifier field)))))
 
 (define-object struct-declarator
       (and (v (? type-qualifier)) (v type-specifier)

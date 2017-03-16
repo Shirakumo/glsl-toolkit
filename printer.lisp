@@ -248,8 +248,8 @@
 (define-serialization struct-declaration (identifier &rest declarators)
   (sformat "struct ~o{~{~o~}}" identifier declarators))
 
-(define-serialization struct-declarator (qualifier specifier &rest fields)
-  (sformat "~o~o~{~{~o~^ ~}~^, ~};" qualifier specifier fields))
+(define-serialization struct-declarator (qualifier specifier identifier &optional array)
+  (sformat "~o~o ~o~o;" qualifier specifier identifier array))
 
 (define-serialization array-initializer (initializer &rest initializers)
   (sformat "{~o~{, ~o~}}" initializer initializers))
