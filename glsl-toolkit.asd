@@ -24,4 +24,5 @@
                (:file "documentation"))
   :depends-on (:documentation-utils
                :parse-float
-               :trivial-indent))
+               :trivial-indent
+               :cl-ppcre))

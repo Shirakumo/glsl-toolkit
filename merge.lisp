@@ -8,8 +8,12 @@
 
 (defvar *unique-counter* 0)
 
-(defun uniquify (&optional name)
-  (format NIL "__~@[~a_~]~d" name *unique-counter*))
+(defun uniquify (table &optional name)
+  (cl-ppcre:register-groups-bind (realname) ("^__(.*)_\\d+$" name)
+    (setf name realname))
+  (loop for ident = (format NIL "__~@[~a_~]~d" name (incf *unique-counter*))
+        unless (gethash ident table)
+        do (return ident)))
 
 (defun matching-qualifiers-p (a b)
   (let ((irrelevant '(:highp :mediump :lowp :invariant :precise :smooth :flat :noperspective)))
@@ -51,11 +55,16 @@
   (flet ((store-identifier (from &optional (to from))
            (setf (gethash from global-env)
                  (if (gethash from global-env)
-                     (uniquify to)
+                     (uniquify global-env to)
                      to))))
     (case (first ast)
       ((function-definition function-declaration)
-       (store-identifier (fourth (second ast)))
+       (let ((ident (fourth (second ast))))
+         (cond ((string= ident "main")
+                (push (setf (gethash ident global-env) (uniquify global-env ident))
+                      (gethash 'main global-env)))
+               (T
+                (store-identifier ident))))
        ast)
       (struct-declaration
        (store-identifier `(:struct ,(second ast)))
@@ -145,15 +154,13 @@
                     ast))))
       (append '(shader)
               (loop for shader in shaders
-                    for *unique-counter* from 0
                     appending (rest (walk shader #'walker)))
               `((function-definition
                  (function-prototype
                   ,no-value :void "main")
                  (compound-statement
-                  ,@(loop for shader in shaders
-                          for *unique-counter* from 0
-                          collect `(modified-reference ,(uniquify "main") (call-modifier))))))))))
+                  ,@(loop for main in (nreverse (gethash 'main global-env))
+                          collect `(modified-reference ,main (call-modifier))))))))))
 
 (defun merge-shader-sources (sources &optional to)
   (serialize (apply #'merge-shaders (mapcar #'parse sources)) to))
