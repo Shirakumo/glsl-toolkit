@@ -6,6 +6,12 @@
 
 (in-package #:org.shirakumo.trial.glsl)
 
+(defun starts-with (start sequence)
+  (and (<= (length start) (length sequence))
+       (loop for a across start
+             for b across sequence
+             always (eql a b))))
+
 (defun enlist (list &rest items)
   (if (listp list) list (list* list items)))
 

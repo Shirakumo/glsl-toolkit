@@ -145,23 +145,40 @@
 
 (defun merge-shaders (&rest shaders)
   (let ((*unique-counter* 0)
-        (global-env (make-hash-table :test 'equal)))
+        (global-env (make-hash-table :test 'equal))
+        (version "120")
+        (profile))
     (flet ((walker (ast context environment)
              (cond ((declaration-p ast environment)
                     (handle-declaration ast context environment global-env))
                    ((stringp ast)
                     (handle-identifier ast context environment global-env))
+                   ((preprocessor-p ast environment)
+                    (if (starts-with "#version" (second ast))
+                        (cl-ppcre:register-groups-bind (v NIL p) ("#version (\\d{3})( (.*))?" (second ast))
+                          (when (< (parse-integer version) (parse-integer v))
+                            (setf version v))
+                          (when p
+                            (when (and profile (string/= profile p))
+                              (warn "Incompatible OpenGL profiles requested: ~a and ~a."
+                                    profile p))
+                            (setf profile p))
+                          NIL)
+                        ast))
                    (T
                     ast))))
-      (append '(shader)
-              (loop for shader in shaders
-                    appending (rest (walk shader #'walker)))
-              `((function-definition
-                 (function-prototype
-                  ,no-value :void "main")
-                 (compound-statement
-                  ,@(loop for main in (nreverse (gethash 'main global-env))
-                          collect `(modified-reference ,main (call-modifier))))))))))
+      (let ((results (loop for shader in shaders
+                          appending (rest (walk shader #'walker)))))
+        (append `(shader
+                  (preprocessor-directive
+                   ,(format NIL "#version ~a~@[ ~a~]" version profile)))
+                results
+                `((function-definition
+                   (function-prototype
+                    ,no-value :void "main")
+                   (compound-statement
+                    ,@(loop for main in (nreverse (gethash 'main global-env))
+                            collect `(modified-reference ,main (call-modifier)))))))))))
 
 (defun merge-shader-sources (sources &optional to)
   (serialize (apply #'merge-shaders (mapcar #'parse sources)) to))
