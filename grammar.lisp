@@ -267,7 +267,8 @@
   (or function-declaration
       variable-declaration
       precision-declaration
-      struct-declaration))
+      struct-declaration
+      buffer-declaration))
 
 (define-object function-declaration
       (and (v function-prototype) :\;))
@@ -414,6 +415,13 @@
 (define-object struct-field-declarator
       (and (v identifier) (? (v array-specifier)))
   v)
+
+(define-object buffer-declaration
+      (and :buffer (v (? identifier)) (? (and :\{ (+ (v struct-declarator)) #\})) (v (? identifier)))
+  `(buffer-declaration
+    ,(first v)
+    ,(car (last v))
+    ,@(butlast v)))
 
 (define-reference initializer
   array-initializer

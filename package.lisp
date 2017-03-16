@@ -94,6 +94,7 @@
    #:struct-declaration
    #:struct-declarator
    #:struct-field-declarator
+   #:buffer-declaration
    #:initializer
    #:array-initializer
    #:statement

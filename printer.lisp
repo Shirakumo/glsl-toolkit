@@ -251,6 +251,9 @@
 (define-serialization struct-declarator (qualifier specifier &rest fields)
   (sformat "~o~o~{~{~o~^ ~}~^, ~};" qualifier specifier fields))
 
+(define-serialization buffer-declaration (public-identifier identifier &rest fields)
+  (sformat "buffer ~o{~{~o~}}~o" public-identifier fields identifier))
+
 (define-serialization array-initializer (initializer &rest initializers)
   (sformat "{~o~{, ~o~}}" initializer initializers))
 
