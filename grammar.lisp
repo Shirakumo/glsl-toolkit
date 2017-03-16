@@ -505,4 +505,4 @@
 
 (define-object shader
       (* (or (v (or declaration function-definition preprocessor-directive))
-             #\;)))
+             :\;)))
