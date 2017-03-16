@@ -72,6 +72,9 @@
        ast)
       (precision-declaration
        ast)
+      ;; FIXME!!!!
+      (interface-declaration
+       ast)
       (variable-declaration
        (cond ((find-direction-qualifier (second ast))
               (destructuring-bind (qualifiers specifiers identifier array &optional init) (rest ast)
