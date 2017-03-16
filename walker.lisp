@@ -54,8 +54,7 @@
                              function-definition
                              variable-declaration
                              precision-declaration
-                             struct-declaration
-                             buffer-declaration))))
+                             struct-declaration))))
 
 (defun expression-p (value environment)
   (or (constant-p value environment)
@@ -327,11 +326,6 @@
   qualifier
   specifier
   (mapcar* #'walk fields))
-
-(define-walking-body buffer-declaration (public-identifier identifier &rest declarators)
-  (walk public-identifier)
-  (walk identifier)
-  (mapcar* #'walk declarators))
 
 (define-walking-body array-initializer (&rest initializers)
   (mapcar* #'walk initializers))
