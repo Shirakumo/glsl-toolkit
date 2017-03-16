@@ -267,6 +267,7 @@
   (or function-declaration
       variable-declaration
       precision-declaration
+      interface-declaration
       struct-declaration))
 
 (define-object function-declaration
@@ -420,6 +421,21 @@
 (define-object struct-field-declarator
       (and (v identifier) (? (v array-specifier)))
   v)
+
+(define-object interface-declaration
+      (and (v (? type-qualifier)) (v identifier)
+           :\{ (* (v struct-declarator)) :\} (v (? instance-name)))
+  `(interface-declaration
+    ,(first v)
+    ,(second v)
+    ,(car (last v))
+    ,@(loop for declarator in (cddr (butlast v))
+            for (qualifier specifier . fields) = (rest declarator)
+            appending (loop for field in fields
+                            collect (list* 'struct-declarator qualifier specifier field)))))
+
+(define-object instance-name
+      (and (v identifier) (? (v array-specifier))))
 
 (define-reference initializer
   array-initializer

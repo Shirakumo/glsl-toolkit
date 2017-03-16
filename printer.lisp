@@ -246,10 +246,20 @@
   (sformat "struct ~o" identifier))
 
 (define-serialization struct-declaration (identifier &rest declarators)
-  (sformat "struct ~o{~{~o~}}" identifier declarators))
+  (with-indentation ()
+    (sformat "struct ~o{~{~o~}" identifier declarators))
+  (indent) (sformat "}"))
 
 (define-serialization struct-declarator (qualifier specifier identifier &optional array)
-  (sformat "~o~o ~o~o;" qualifier specifier identifier array))
+  (indent) (sformat "~o~o ~o~o;" qualifier specifier identifier array))
+
+(define-serialization interface-declaration (qualifier identifier instance &rest declarators)
+  (with-indentation ()
+    (sformat "~o~o{~{~o~}" qualifier identifier declarators))
+  (indent) (sformat "} ~o" instance))
+
+(define-serialization instance-name (identifier &optional array)
+  (sformat "~o~o" identifier array))
 
 (define-serialization array-initializer (initializer &rest initializers)
   (sformat "{~o~{, ~o~}}" initializer initializers))

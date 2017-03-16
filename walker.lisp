@@ -305,7 +305,7 @@
 
 (define-walking-body type-specifier (type &optional array)
   type
-  (when array (list array)))
+  (enlist array))
 
 (define-walking-body array-specifier (&rest specifiers)
   specifiers)
@@ -326,7 +326,17 @@
   qualifier
   specifier
   (walk identifier)
-  (when array (list array)))
+  (enlist array))
+
+(define-walking-body interface-declaration (qualifier identifier instance &rest declarators)
+  qualifier
+  (walk identifier)
+  (walk instance)
+  (mapcar* #'walk declarators))
+
+(define-walking-body instance-name (identifier &optional array)
+  (walk identifier)
+  (enlist array))
 
 (define-walking-body array-initializer (&rest initializers)
   (mapcar* #'walk initializers))
