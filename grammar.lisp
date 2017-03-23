@@ -59,7 +59,7 @@
        ,@names)))
 
 (define-operator-objects
-  = += -= *= /= %= <<= >>= &= ^= \|=
+  == != = += -= *= /= %= <<= >>= &= ^= \|=
   ++ -- << >>  ^^ \|\| && <= >= < >
   + - * / % & ^ ! \|
   \( \) \[ \] \{ \} \; \. ? \: \,)
@@ -250,7 +250,7 @@
 
 (define-object assignment
       (and (v unary-expression)
-           (v (or := :*= :/= :%= :+= :-= :<= :>= :&= :^= :\|=))
+           (v (or := :*= :/= :%= :+= :<<= :>>= :-= :&= :^= :\|=))
            (v assignment-expression)))
 
 (define-reference expression
