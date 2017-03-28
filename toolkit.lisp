@@ -62,7 +62,7 @@
     "dmat3x4" "dmat3x3" "dmat3x2" "dmat3" "dmat2x4" "dmat2x3" "dmat2x2" "dmat2"
     "discard" "default" "continue" "cont" "common" "coherent" "class" "centroid"
     "cast" "case" "bvec4" "bvec3" "bvec2" "buffer" "break" "bool" "attribute"
-    "atomic_uint" "asm" "active"))
+    "atomic_uint" "asm" "active" "const"))
 
 (defvar *glsl-keyword-symbols*
   (loop for item in *glsl-keywords*
