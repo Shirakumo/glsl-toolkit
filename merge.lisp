@@ -35,7 +35,7 @@
 
 (defun find-direction-qualifier (qualifiers)
   (unless (eql no-value qualifiers)
-    (find-any '(:in :out :inout) qualifiers)))
+    (find-any '(:in :out :inout :uniform) qualifiers)))
 
 (defun find-matching-layout-declaration (qualifiers declarations)
   (find (find-layout-qualifier qualifiers)
