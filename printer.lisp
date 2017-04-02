@@ -87,6 +87,7 @@
      (sformat "~d" part))
     (float
      (sformat "~f~@[lf~]" part (typep part 'double-float)))
+    ((eql :\;))
     (keyword
      (sformat "~a" (find part *glsl-keywords* :test #'string-equal)))
     (string
@@ -276,6 +277,7 @@
     (dolist (statement statements)
       (cond ((preprocessor-p statement NIL)
              (sformat "~o" statement))
+            ((eql statement :\;))
             (T
              (indent) (sformat "~o;" statement)))))
   (indent) (sformat "}"))
