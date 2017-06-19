@@ -442,7 +442,7 @@
   assignment-expression)
 
 (define-object array-initializer
-      (and :\{ (v initializer) (* (and :\, (v initializer))) (? :\,) :\}))
+    (and (v type-specifier-nonarray) :\[ :\] :\( (? (v initializer)) (* (and :\, (v initializer))) (? :\,) :\)))
 
 (define-reference statement
   simple-statement

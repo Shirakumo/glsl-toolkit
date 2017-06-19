@@ -262,8 +262,8 @@
 (define-serialization instance-name (identifier &optional array)
   (sformat "~o~o" identifier array))
 
-(define-serialization array-initializer (initializer &rest initializers)
-  (sformat "{~o~{, ~o~}}" initializer initializers))
+(define-serialization array-initializer (type &optional initializer &rest initializers)
+  (sformat "~o[](~@[~o~{, ~o~}~])" type initializer initializers))
 
 (define-serialization multiple-statements (&optional statement &rest statements)
   (when statement
