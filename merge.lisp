@@ -9,9 +9,9 @@
 (defvar *unique-counter* 0)
 
 (defun uniquify (table &optional name)
-  (cl-ppcre:register-groups-bind (realname) ("^__(.*)_\\d+$" name)
+  (cl-ppcre:register-groups-bind (realname) ("^_GLSLTK_(.*)_\\d+$" name)
     (setf name realname))
-  (loop for ident = (format NIL "__~@[~a_~]~d" name (incf *unique-counter*))
+  (loop for ident = (format NIL "_GLSLTK_~@[~a_~]~d" name (incf *unique-counter*))
         unless (gethash ident table)
         do (return ident)))
 
