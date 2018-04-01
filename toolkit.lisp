@@ -45,7 +45,7 @@
     "sampler2DMSArray" "sampler2DMS" "sampler2DArrayShadow" "sampler2DArray"
     "sampler2D" "sampler1DShadow" "sampler1DArrayShadow" "sampler1DArray"
     "sampler1D" "sample" "return" "restrict" "resource" "readonly" "public"
-    "precision" "precise" "patch" "partition" "out" "otput" "notinline"
+    "precision" "precise" "patch" "partition" "out" "output" "notinline"
     "noperspective" "namespace" "mediump" "mat4x4" "mat4x3" "mat4x2" "mat4"
     "mat3x4" "mat3x3" "mat3x2" "mat3" "mat2x4" "mat2x3" "mat2x2" "mat2" "lowp"
     "long" "layout" "ivec4" "ivec3" "ivec2" "isamplerCubeArray" "isamplerCube"
