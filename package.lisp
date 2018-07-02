@@ -89,11 +89,13 @@
    #:array-specifier
    #:type-specifier-nonarray
    #:type-name
+   #:instance-name
    #:basic-type
    #:struct-specifier
    #:struct-declaration
    #:struct-declarator
    #:struct-field-declarator
+   #:interface-declaration
    #:initializer
    #:array-initializer
    #:statement
