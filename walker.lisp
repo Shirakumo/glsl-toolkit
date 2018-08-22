@@ -336,7 +336,8 @@
 
 (define-walking-body instance-name (identifier &optional array)
   (walk identifier)
-  (enlist array))
+  (list
+   (enlist array)))
 
 (define-walking-body array-initializer (&rest initializers)
   (mapcar* #'walk initializers))

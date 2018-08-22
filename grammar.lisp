@@ -345,7 +345,8 @@
       (and (v type-specifier-nonarray) (? (v array-specifier))))
 
 (define-object array-specifier
-      (+ (and :\[ (? (v constant-expression)) :\])))
+    (+ (and :\[ (? (v constant-expression)) :\]))
+  (list* 'array-specifier v))
 
 (define-reference type-specifier-nonarray
   basic-type
