@@ -255,9 +255,12 @@
   (indent) (sformat "~o~o ~o~o;" qualifier specifier identifier array))
 
 (define-serialization interface-declaration (qualifier identifier instance &rest declarators)
-  (with-indentation ()
-    (sformat "~o~o{~{~o~}" qualifier identifier declarators))
-  (indent) (sformat "} ~o" instance))
+  (cond (identifier
+         (with-indentation ()
+           (sformat "~o~o{~{~o~}" qualifier identifier declarators))
+         (indent) (sformat "} ~o" instance))
+        (T
+         (sformat "~o" qualifier))))
 
 (define-serialization instance-name (identifier &optional array)
   (sformat "~o~o" identifier array))

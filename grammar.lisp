@@ -310,7 +310,12 @@
       (and :layout :\( (v layout-qualifier-id) (* (and :\, (v layout-qualifier-id))) :\)))
 
 (define-object layout-qualifier-id
-      (or (v :shared)
+    (or (v (any (:shared :packed :std140 :std430 :row_major :column_major
+                 :triangles :quads :isolines :equal_spacing :fractional_even_spacing
+                         :fractional_odd_spacing :cw :ccw :point_mode :points :lines :line_adjacency
+                 :triangles :triangles_adjaceney :origin_upper_left :pixel_center_integer
+                 :early_fragment_tests :line_strip :triangle_strip :depth_any :depth_greater
+                         :depth_less :depth_unchanged)))
           (and (v identifier) (? (and := (v constant-expression))))))
 
 (define-reference precise-qualifier
@@ -423,12 +428,13 @@
   v)
 
 (define-object interface-declaration
-      (and (v (? type-qualifier)) (v identifier)
-           :\{ (* (v struct-declarator)) :\} (v (? instance-name)))
+      (and (v (? type-qualifier))
+           (? (and (v identifier) :\{ (* (v struct-declarator)) :\} (v (? instance-name))))
+           :\;)
   `(interface-declaration
     ,(first v)
     ,(second v)
-    ,(car (last v))
+    ,(when (cddr v) (car (last v)))
     ,@(loop for declarator in (cddr (butlast v))
             for (qualifier specifier . fields) = (rest declarator)
             appending (loop for field in fields
