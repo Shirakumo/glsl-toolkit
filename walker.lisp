@@ -326,7 +326,7 @@
   qualifier
   specifier
   (walk identifier)
-  (enlist array))
+  (if array (list array)))
 
 (define-walking-body interface-declaration (qualifier identifier instance &rest declarators)
   qualifier
