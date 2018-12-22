@@ -143,6 +143,8 @@ See MERGE-SHADER-SOURCES")
   (function merge-shader-sources
     "Convenience function to merge the sources of multiple shaders into a single one.
 
+Each source may be a string, pathname, or shader AST.
+
 See PARSE
 See MERGE-SHADERS
 See SERIALIZE"))

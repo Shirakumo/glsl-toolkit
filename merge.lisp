@@ -184,4 +184,9 @@
                             collect `(modified-reference ,main (call-modifier)))))))))))
 
 (defun merge-shader-sources (sources &optional to)
-  (serialize (apply #'merge-shaders (mapcar #'parse sources)) to))
+  (serialize (apply #'merge-shaders
+                    (loop for source in sources
+                          collect (typecase source
+                                    (cons source)
+                                    (T (parse source)))))
+             to))
