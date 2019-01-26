@@ -43,9 +43,9 @@
   `(let ((*indent* (+ ,step *indent*)))
      ,@body))
 
-(defun indent ()
+(defun indent (&optional (offset 0))
   (fresh-line *serialize-stream*)
-  (format *serialize-stream* "~v{ ~}" *indent* 0))
+  (format *serialize-stream* "~v{ ~}" (+ *indent* offset) 0))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun compile-format-string (string)
@@ -281,6 +281,8 @@
       (cond ((preprocessor-p statement NIL)
              (sformat "~o" statement))
             ((eql statement :\;))
+            ((and (listp statement) (eql 'case-label (car statement)))
+             (indent -2) (sformat "~o" statement))
             (T
              (indent) (sformat "~o;" statement)))))
   (indent) (sformat "}"))
