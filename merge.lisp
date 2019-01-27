@@ -55,7 +55,8 @@
     (return-from handle-declaration ast))
   (flet ((store-identifier (from &optional (to from))
            (setf (gethash from global-env)
-                 (if (gethash from global-env)
+                 (if (loop for v being the hash-values of global-env
+                           thereis (equal v from))
                      (uniquify global-env to)
                      to))))
     (case (first ast)
