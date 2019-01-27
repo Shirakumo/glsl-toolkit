@@ -10,6 +10,7 @@
   ((root :initform NIL :reader root)
    (bindings :initform (make-hash-table :test 'equal) :reader bindings)))
 
+;; FIXME: all this stuff could as well be generic
 (defun binding (name environment)
   (gethash name (bindings environment)))
 

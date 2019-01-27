@@ -127,9 +127,10 @@
 
 (defun handle-identifier (ast context environment global-env)
   (or (when (global-identifier-p ast environment)
-        (if (eql 'struct-specifier (first context))
-            (gethash `(:struct ,ast) global-env)
-            (gethash ast global-env)))
+        (case (first context)
+          (struct-specifier (gethash `(:struct ,ast) global-env))
+          (struct-declarator ast)
+          (T (gethash ast global-env))))
       ast))
 
 (defun split-shader-into-groups (shader)
