@@ -6,11 +6,9 @@
 
 (in-package #:org.shirakumo.trial.glsl)
 
-(defstruct (environment (:conc-name NIL)
-                        (:constructor %make-environment)
-                        (:copier NIL))
-  (root NIL)
-  (bindings (make-hash-table :test 'equal)))
+(defclass environment ()
+  ((root :initform NIL :reader root)
+   (bindings :initform (make-hash-table :test 'equal) :reader bindings)))
 
 (defun binding (name environment)
   (gethash name (bindings environment)))
@@ -19,14 +17,14 @@
   (setf (gethash name (bindings environment)) value))
 
 (defun make-environment (&optional parent)
-  (let ((environment (%make-environment)))
+  (let ((environment (make-instance 'environment)))
     (cond (parent
-           (setf (root environment) (root parent))
+           (setf (slot-value environment 'root) (root parent))
            (loop for k being the hash-keys of (bindings parent)
                  for v being the hash-values of (bindings parent)
                  do (setf (binding k environment) v)))
           (T
-           (setf (root environment) environment)
+           (setf (slot-value environment 'root) environment)
            ;; FIXME: inject standard function and variable defs
            ))
     environment))
@@ -138,18 +136,16 @@
   (walk-part ast ast function environment))
 
 (defun walk-part (ast context function environment)
-  (flet ((walk (node &optional (environment environment))
-           (walk-inner node ast function environment)))
-    (etypecase ast
-      ((or integer float keyword string null (eql #.no-value))
-       (funcall function ast context environment))
-      (cons
-       (setf ast (funcall function ast context environment))
-       (when ast
-         (funcall (or (walker (first ast))
-                      (error "Cannot walk AST-object of type ~s."
-                             (first ast)))
-                  ast function environment))))))
+  (etypecase ast
+    ((or integer float keyword string null (eql #.no-value))
+     (funcall function ast context environment))
+    (cons
+     (setf ast (funcall function ast context environment))
+     (when ast
+       (funcall (or (walker (first ast))
+                    (error "Cannot walk AST-object of type ~s."
+                           (first ast)))
+                ast function environment)))))
 
 (defvar *walkers* (make-hash-table :test 'eql))
 
