@@ -130,6 +130,7 @@
         (case (first context)
           (struct-specifier (gethash `(:struct ,ast) global-env))
           (struct-declarator ast)
+          (field-modifier ast)
           (T (gethash ast global-env))))
       ast))
 
