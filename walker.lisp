@@ -53,7 +53,8 @@
                              function-definition
                              variable-declaration
                              precision-declaration
-                             struct-declaration))))
+                             struct-declaration
+                             interface-declaration))))
 
 (defun expression-p (value environment)
   (or (constant-p value environment)
