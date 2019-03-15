@@ -150,6 +150,7 @@
       (walk shader #'walker))
     groups))
 
+;; FIXME: track use relations to reorder definitions properly
 (defun merge-shaders (&rest shaders)
   (let ((*unique-counter* 0)
         (global-env (make-hash-table :test 'equal))
@@ -175,7 +176,7 @@
                    (T
                     ast))))
       (let ((results (loop for shader in shaders
-                          appending (rest (walk shader #'walker)))))
+                           appending (rest (walk shader #'walker)))))
         (append `(shader
                   (preprocessor-directive
                    ,(format NIL "#version ~a~@[ ~a~]" version profile)))
