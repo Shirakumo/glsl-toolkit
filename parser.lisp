@@ -8,6 +8,7 @@
 
 (defvar *token-array* "")
 (defvar *token-index* 0)
+(defvar *max-index* 0)
 
 (macrolet ((define-novalue ()
              (let ((name 'no-value))
@@ -25,10 +26,12 @@
        (the index *token-index*)))
 
 (defun advance (&optional (offset 1))
+  (setf *max-index* (max *max-index* (+ *token-index* 1)))
   (incf *token-index* offset))
 
 (define-compiler-macro advance (&optional (offset 1))
-  `(setf *token-index* (+ (the index *token-index*) ,offset)))
+  `(setf *max-index* (max (the index *max-index*) (+ (the index *token-index*) ,offset))
+         *token-index* (+ (the index *token-index*) ,offset)))
 
 (defun backtrack (&optional (offset 1))
   (decf *token-index* offset))
@@ -52,7 +55,8 @@
 
 (defmacro with-token-input (vector &body body)
   `(let ((*token-array* ,vector)
-         (*token-index* 0))
+         (*token-index* 0)
+         (*max-index* 0))
      ,@body))
 
 (defun rule (name)
@@ -218,12 +222,34 @@
                    ;; Handle other chars
                    (T (write-char char output)))))))))
 
+(defun discover-expr-around (point)
+  (let ((terminators (if (stringp *token-array*)
+                         ";{}()"
+                         '(:\; :{ :} :\( :\)))))
+    (subseq *token-array*
+            (loop for i downfrom point to 0
+                  for token = (aref *token-array* i)
+                  when (find token terminators)
+                  do (return (1+ i)))
+            (loop for i from point below (length *token-array*)
+                  for token = (aref *token-array* i)
+                  when (find token terminators)
+                  do (return i)))))
+
 (defun check-parse-complete (toplevel-rule)
   (when (/= *token-index* (length *token-array*))
-    (cerror "Ignore the failure."
-            "The parse rule ~a did not consume all of the tokens.~%~
-             It is likely that it failed somewhere around ~a (position ~d)"
-            toplevel-rule (peek) *token-index*)))
+    (let ((problem (discover-expr-around *max-index*))
+          (*print-case* :downcase))
+      ;; FIXME: once we have the AST as a non-implicit thing with class instances, we can keep track of
+      ;;        lines and columns too.
+      (cerror "Ignore the failure."
+              "The parse rule ~a did not consume all of the tokens.~%~
+             It failed to continue parsing around ~s (position ~d):~%~%  ~a"
+              toplevel-rule (aref *token-array* *max-index*) *max-index*
+              (if (stringp problem)
+                  problem
+                  (with-output-to-string (out)
+                    (loop for a across problem do (format out "~a " a))))))))
 
 (defun lex (input &optional (toplevel-rule 'tokenize))
   (with-token-input (normalize-shader-source input)
