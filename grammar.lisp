@@ -8,7 +8,7 @@
 
 ;;; Lexer
 (define-reference whitespace
-  #\Newline #\Space #\Tab)
+  #\Linefeed #\Return #\Space #\Tab)
 
 (define-object integer-token
       (and (v (or decimal-token
@@ -48,7 +48,7 @@
   (intern (string-upcase (first v)) :keyword))
 
 (define-object preprocessor-token
-      (and (v #\#) (* (v (notany (#\Newline)))))
+      (and (v #\#) (* (v (notany (#\Return #\Linefeed)))))
   (list 'preprocessor-directive (coerce v 'string)))
 
 (defmacro define-operator-objects (&body names)

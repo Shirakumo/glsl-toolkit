@@ -78,7 +78,8 @@
   (loop until (end-of-tokens-p)
         for char = (peek)
         do (if (or (char= char #\Space)
-                   (char= char #\Newline))
+                   (char= char #\Linefeed)
+                   (char= char #\Return))
                (advance)
                (return))))
 
@@ -180,7 +181,7 @@
               (normalize-shader-source stream)))
     (stream
      (string-trim
-      '(#\Newline #\Space)
+      '(#\Return #\Linefeed #\Space)
       (with-output-to-string (output)
         (loop for char = (read-char input NIL)
               while char
@@ -197,7 +198,7 @@
                    ((#\Return #\Linefeed)
                     (when (newline-p (peek-char NIL input NIL))
                       (read-char input))
-                    (write-char #\Newline output))
+                    (write-char #\Linefeed output))
                    ;; Handle comments
                    (#\/
                     (case (peek-char NIL input)
@@ -206,7 +207,7 @@
                                  until (or (not char)
                                            (and (not (char= #\\ prev))
                                                 (newline-p char))))
-                       (write-char #\Newline output))
+                       (write-char #\Linefeed output))
                       (#\* (loop for prev = #\  then char
                                  for char = (read-char input)
                                  until (and (char= #\* prev)
