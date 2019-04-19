@@ -45,7 +45,7 @@
 
 (defun indent (&optional (offset 0))
   (fresh-line *serialize-stream*)
-  (format *serialize-stream* "~v{ ~}" (+ *indent* offset) 0))
+  (format *serialize-stream* "~v{ ~}" (+ *indent* offset) '(0)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun compile-format-string (string)
