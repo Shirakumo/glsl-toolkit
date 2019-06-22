@@ -6,7 +6,7 @@
 
 (asdf:defsystem glsl-toolkit
   :version "1.0.0"
-  :license "Artistic"
+  :license "zlib"
   :author "Nicolas Hafner <shinmera@tymoon.eu>"
   :maintainer "Nicolas Hafner <shinmera@tymoon.eu>"
   :description "A library to parse and modify OpenGL Shader Language (GLSL) source code"
