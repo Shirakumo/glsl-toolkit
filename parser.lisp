@@ -228,7 +228,7 @@
                          ";{}()"
                          '(:\; :{ :} :\( :\)))))
     (subseq *token-array*
-            (loop for i downfrom point to 0
+            (loop for i downfrom (1- point) to 0
                   for token = (aref *token-array* i)
                   when (find token terminators)
                   do (return (1+ i)))
