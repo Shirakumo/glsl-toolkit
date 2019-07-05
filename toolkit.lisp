@@ -30,7 +30,7 @@
                    (append (getf key res) val)))
     res))
 
-(defvar *glsl-keywords*
+(defparameter *glsl-keywords*
   '("writeonly" "while" "volatile" "void" "vec4" "vec3" "vec2" "varying" "uvec4"
     "uvec3" "uvec2" "using" "usamplerCubeArray" "usamplerCube" "usamplerBuffer"
     "usampler3D" "usampler2DRect" "usampler2DMSArray" "usampler2DMS"
@@ -62,7 +62,7 @@
     "dmat3x4" "dmat3x3" "dmat3x2" "dmat3" "dmat2x4" "dmat2x3" "dmat2x2" "dmat2"
     "discard" "default" "continue" "cont" "common" "coherent" "class" "centroid"
     "cast" "case" "bvec4" "bvec3" "bvec2" "buffer" "break" "bool" "attribute"
-    "atomic_uint" "asm" "active" "const"))
+    "atomic_uint" "asm" "active" "const" "packed" "std140" "std430"))
 
 (defvar *glsl-keyword-symbols*
   (loop for item in *glsl-keywords*
