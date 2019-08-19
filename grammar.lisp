@@ -412,10 +412,13 @@
       (and :struct (v identifier)))
 
 (define-object struct-declaration
-      (and :struct (v (? identifier)) (? (and :\{ (+ (v struct-declarator)) :\})))
+    (and :struct (v (? identifier))
+         (? (and :\{ (+ (v struct-declarator)) :\})) (v (? instance-name))
+         :\;)
   `(struct-declaration
     ,(first v)
-    ,@(loop for declarator in (rest v)
+    ,(when (cdr v) (car (last v)))
+    ,@(loop for declarator in (butlast (rest v))
             for (qualifier specifier . fields) = (rest declarator)
             appending (loop for field in fields
                             collect (list* 'struct-declarator qualifier specifier field)))))

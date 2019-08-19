@@ -316,8 +316,9 @@
   (walk identifier)
   NIL)
 
-(define-walking-body struct-declaration (identifier &rest declarators)
+(define-walking-body struct-declaration (identifier instance &rest declarators)
   (walk identifier)
+  (walk instance)
   (mapcar* #'walk declarators))
 
 (define-walking-body struct-declarator (qualifier specifier identifier &optional array)
