@@ -218,7 +218,7 @@
                        (type-qualifier ,@qualifiers)
                        (type-specifier ,@specifiers)
                        ,(r identifier)
-                       ,@(loop for (type ident &optional array) in arglist
+                       ,@(loop for (type ident array) in arglist
                                collect `((type-specifier ,(intern (string type) :keyword))
                                          ,(r ident)
                                          ,@(when array (list array))))))))
