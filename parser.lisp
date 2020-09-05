@@ -231,7 +231,8 @@
             (loop for i downfrom (1- point) to 0
                   for token = (aref *token-array* i)
                   when (find token terminators)
-                  do (return (1+ i)))
+                  do (return (1+ i))
+                  finally (return 0))
             (loop for i from point below (length *token-array*)
                   for token = (aref *token-array* i)
                   when (find token terminators)
