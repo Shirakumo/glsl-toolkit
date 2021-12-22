@@ -151,11 +151,10 @@
     groups))
 
 ;; FIXME: track use relations to reorder definitions properly
-(defun merge-shaders (&rest shaders)
+(defun merge-shaders (shaders &key (min-version "120") profile)
   (let ((*unique-counter* 0)
         (global-env (make-hash-table :test 'equal))
-        (version "120")
-        (profile))
+        (version min-version))
     (flet ((walker (ast context environment)
              (cond ((declaration-p ast environment)
                     (handle-declaration ast context environment global-env))
@@ -164,7 +163,7 @@
                    ((preprocessor-p ast environment)
                     (if (starts-with "#version" (second ast))
                         (cl-ppcre:register-groups-bind (v NIL p) ("#version (\\d{3})( (.*))?" (second ast))
-                          (when (< (parse-integer version) (parse-integer v))
+                          (when (or (null version) (< (parse-integer version) (parse-integer v)))
                             (setf version v))
                           (when p
                             (when (and profile (string/= profile p))
@@ -177,9 +176,10 @@
                     ast))))
       (let ((results (loop for shader in shaders
                            appending (rest (walk shader #'walker)))))
-        (append `(shader
-                  (preprocessor-directive
-                   ,(format NIL "#version ~a~@[ ~a~]" version profile)))
+        (append '(shader)
+                (when version
+                  `((preprocessor-directive
+                     ,(format NIL "#version ~a~@[ ~a~]" version profile))))
                 results
                 `((function-definition
                    (function-prototype
@@ -188,10 +188,11 @@
                     ,@(loop for main in (nreverse (gethash 'main global-env))
                             collect `(modified-reference ,main (call-modifier)))))))))))
 
-(defun merge-shader-sources (sources &optional to)
-  (serialize (apply #'merge-shaders
-                    (loop for source in sources
-                          collect (typecase source
-                                    (cons source)
-                                    (T (parse source)))))
+(defun merge-shader-sources (sources &key to (min-version "120") profile)
+  (serialize (merge-shaders
+              (loop for source in sources
+                    collect (typecase source
+                              (cons source)
+                              (T (parse source))))
+              :min-version min-version :profile profile)
              to))
