@@ -166,6 +166,9 @@
   (:export
    #:*glsl-keywords*
    #:*glsl-keyword-symbols*)
+  ;; transform.lisp
+  (:export
+   #:transform)
   ;; walker.lisp
   (:export
    #:environment

@@ -22,6 +22,7 @@
                (:file "walker")
                (:file "merge")
                (:file "sexpr")
+               (:file "transform")
                (:file "documentation"))
   :depends-on (:documentation-utils
                :parse-float
