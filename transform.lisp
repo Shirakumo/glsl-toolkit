@@ -6,39 +6,65 @@
 
 (in-package #:org.shirakumo.trial.glsl)
 
-(defun transform-to-gles (source version)
-  (declare (ignore version))
-  (labels ((replace-parts (statement &rest parts)
-             (loop for part in statement
-                   for rep = (getf parts part part)
-                   collect rep))
-           (transform (statement)
-             (etypecase statement
-               (cons
-                (case (first statement)
-                  (variable-declaration
-                   (mapcar #'transform statement))
-                  (type-qualifier
-                   (append (replace-parts statement :in :varying :out :varying)
-                           (unless (find-any '(:mediump :highp :lowp :uniform) statement)
-                             '(:mediump))))
-                  (T
-                   statement)))
-               ((or symbol string)
-                statement))))
-    (transform source)))
+(defun transform-to-gles (version ast ctx env)
+  (destructuring-bind (major minor) version
+    (declare (ignore minor))
+    (labels ((replace-parts (statement &rest parts)
+               (loop for part in statement
+                     for rep = (getf parts part part)
+                     collect rep))
+             (type-qualifier (qualifier)
+               (if (listp qualifier)
+                   (case (first qualifier)
+                     (type-qualifier
+                      (append (if (< major 3)
+                                  (if (find 'layout-qualifier qualifier :key #'unlist)
+                                      (replace-parts qualifier (second qualifier) :attribute)
+                                      (replace-parts qualifier :in :varying :out :varying))
+                                  qualifier)
+                              (unless (find-any '(:mediump :highp :lowp) qualifier)
+                                '(:mediump)))))
+                   '(type-qualifier :mediump))))
+      (typecase ast
+        (cons
+         (case (first ast)
+           (variable-declaration
+            (destructuring-bind (qualifier specifier identifier array &optional initializer)
+                (rest ast)
+              (list (first ast)
+                    (type-qualifier qualifier)
+                    specifier
+                    identifier
+                    array
+                    (when (eq qualifier no-value)
+                      initializer))))
+           (function-prototype
+            (destructuring-bind (qualifier specifier identifier &rest parameters)
+                (rest ast)
+              (list* (first ast)
+                     (type-qualifier qualifier)
+                     specifier
+                     identifier
+                     (loop for parameter in parameters
+                           collect (if (find 'type-qualifier parameter :key #'unlist)
+                                       parameter
+                                       `((type-qualifier :mediump) ,@parameter))))))
+           (T
+            ast)))
+        (T
+         ast)))))
 
-(defun transform-to-core (source version)
+(defun transform-to-core (version ast ctx env)
   (error "IMPLEMENT"))
 
 (defun transform (source profile version)
-  (let ((shader (etypecase source
-                  (string (parse source))
-                  (cons source)))
-        (transform (ecase profile
-                     (:es (lambda (statement) (transform-to-gles statement version)))
-                     (:core (lambda (statement) (transform-to-core statement version)))
-                     ((NIL) #'identity))))
-    `(shader
-      ,@(loop for statement in (rest shader)
-              collect (funcall transform statement)))))
+  (let* ((shader (etypecase source
+                   (string (parse source))
+                   (cons source)))
+         (shader (walk shader (ecase profile
+                                (:es (lambda (ast ctx env) (transform-to-gles version ast ctx env)))
+                                (:core (lambda (ast ctx env) (transform-to-core version ast ctx env)))
+                                ((NIL) #'identity)))))
+    (etypecase source
+      (string (serialize shader))
+      (cons shader))))

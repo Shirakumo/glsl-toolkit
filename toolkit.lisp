@@ -15,6 +15,9 @@
 (defun enlist (list &rest items)
   (if (listp list) list (list* list items)))
 
+(defun unlist (listish)
+  (if (listp listish) (first listish) listish))
+
 (defun mapcar* (function list)
   (loop for item in list
         for result = (funcall function item)
