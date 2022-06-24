@@ -60,7 +60,9 @@
                      (uniquify global-env to)
                      to))))
     (case (first ast)
-      ((function-definition function-declaration)
+      (function-declaration
+       ast)
+      (function-definition
        (let ((ident (fourth (second ast))))
          (cond ((string= ident "main")
                 (push (setf (gethash ident global-env) (uniquify global-env ident))
