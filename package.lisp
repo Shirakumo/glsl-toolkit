@@ -168,6 +168,7 @@
    #:*glsl-keyword-symbols*)
   ;; transform.lisp
   (:export
+   #:preprocess
    #:transform)
   ;; walker.lisp
   (:export
