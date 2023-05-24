@@ -38,8 +38,8 @@
     (parse-float:parse-float (coerce (butlast v) 'string) :type type)))
 
 (define-object identifier-token
-      (and (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"))
-           (* (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"))))
+      (and (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_@"))
+           (* (v (any "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789@"))))
   (coerce v 'string))
 
 (define-object keyword-token
