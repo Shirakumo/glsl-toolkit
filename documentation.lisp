@@ -149,6 +149,48 @@ See PARSE
 See MERGE-SHADERS
 See SERIALIZE"))
 
+;; method-combination.lisp
+(docs:define-docs
+  (function combine-methods
+    "Performs method combination on the listed shader parts.
+
+Each shader in SHADERS may be a string, pathname, stream, or shader AST.
+
+The method combination replicates the CLOS standard method
+combination, including before/after/around, call-next-method, and
+next-method-p.
+
+Any standard function definition is assumed to be a primary
+method. Before, after, and around methods can be defined by suffixing
+the name with @before/@after/@around, respectively.
+
+Within any primary or around method body, the variable next_method_p
+is statically replaced with 1 or 0 depending on whether a next method
+is available or not, and a call to call_next_method is replaced with a
+call to the next method function. If no arguments are passed to
+call_next_method, the arguments are copied automatically.
+
+If methods are defined without a single corresponding primary method,
+an error is signalled.
+
+The order of method definitions is relevant in the following way:
+  - For @before, the later methods are called *first*
+  - For @after, the later methods are called *last*
+  - For @around, the later methods are called *first*
+  - For @primary, the later methods are called *first*
+
+Example:
+
+  void foo@after(int x){ 1; }
+  int foo(int y){ return 2; }
+  int foo(int z){
+    if(next_method_p) return call_next_method();
+    return -1;
+  }
+  void foo@before(int w){ 0; }
+
+See PARSE"))
+
 ;; parser.lisp
 (docs:define-docs
   (variable *token-array*

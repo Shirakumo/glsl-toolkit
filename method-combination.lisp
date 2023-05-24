@@ -121,6 +121,7 @@
   (let ((shaders (mapcar #'ensure-shader (enlist shaders)))
         (env (make-hash-table :test 'equal))
         (other-forms ()))
+    ;; TODO: handle overloading
     (dolist (shader shaders)
       (loop for ast in (rest shader)
             do (case (first ast)
