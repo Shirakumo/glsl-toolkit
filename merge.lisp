@@ -192,7 +192,7 @@
 
 (defun merge-shader-sources (sources &key to (min-version "120") profile)
   (serialize (merge-shaders
-              (loop for source in sources
+              (loop for source in (enlist sources)
                     collect (typecase source
                               (cons source)
                               (T (parse source))))

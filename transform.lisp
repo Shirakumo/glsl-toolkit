@@ -36,8 +36,11 @@
                (setf accumulator ()))
               ((and (eql 'preprocessor-directive (first form))
                     (starts-with "#include " (second form)))
-               (dolist (form (funcall include-resolution (subseq (second form) (length "#include "))))
-                 (push form accumulator)))
+               (let ((include (funcall include-resolution (subseq (second form) (length "#include ")))))
+                 (dolist (form (if (eql 'shader (first include))
+                                   (rest include)
+                                   include))
+                   (push form accumulator))))
               (T
                (push form accumulator))))
       (finish-section))
