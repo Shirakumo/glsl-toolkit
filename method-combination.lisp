@@ -90,6 +90,7 @@
               do (setf (car cons) (resolve-next-method (car cons) next-fun)))
         ;; Construct entry function
         (when (or (getf parts :before) (getf parts :after))
+          (setf (getf parts :after) (nreverse (getf parts :after)))
           (let ((args (definition-argvars proto)))
             (push `(function-definition
                     ,proto
