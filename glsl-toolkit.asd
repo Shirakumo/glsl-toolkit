@@ -23,6 +23,7 @@
                (:file "merge")
                (:file "sexpr")
                (:file "transform")
+               (:file "method-combination")
                (:file "documentation"))
   :depends-on (:documentation-utils
                :parse-float

@@ -299,3 +299,10 @@
 (defun untrace-parse ()
   (do-symbols (symbol '#:org.shirakumo.trial.glsl.parser.rules)
     (when (fboundp symbol) (untrace-parse-func symbol))))
+
+(defun ensure-shader (thing)
+  (etypecase thing
+    ((or string stream pathname)
+     (parse thing))
+    (cons
+     thing)))

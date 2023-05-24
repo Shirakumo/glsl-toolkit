@@ -126,6 +126,9 @@
    #:matching-declarators-p
    #:merge-shaders
    #:merge-shader-sources)
+  ;; method-combination.lisp
+  (:export
+   #:combine-methods)
   ;; parser.lisp
   (:export
    #:no-value

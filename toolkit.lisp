@@ -12,6 +12,13 @@
              for b across sequence
              always (eql a b))))
 
+(defun ends-with (end sequence)
+  (and (<= (length end) (length sequence))
+       (loop for a across end
+             for j from (- (length sequence) (length end))
+             for b = (aref sequence b)
+             always (eql a b))))
+
 (defun enlist (list &rest items)
   (if (listp list) list (list* list items)))
 
