@@ -97,13 +97,13 @@
                     (compound-statement
                      ,@(loop for def in (getf parts :before)
                              collect (emit-call (definition-identifier def) args))
-                     ,(if (eql 'no-value return-type)
+                     ,(if (equal '(glsl-toolkit:type-specifier :void) return-type)
                           (emit-call (definition-identifier (first (getf parts :primary))) args)
                           `(variable-declaration no-value (type-specifier ,return-type) ,return-variable no-value
                                                  ,(emit-call (definition-identifier (first (getf parts :primary))) args)))
                      ,@(loop for def in (getf parts :after)
                              collect (emit-call (definition-identifier def) args))
-                     ,@(unless (eql 'no-value return-type)
+                     ,@(unless (equal '(glsl-toolkit:type-specifier :void) return-type)
                          `((return ,return-variable)))))
                   (getf parts :primary))))
         (cond ((getf parts :around)
