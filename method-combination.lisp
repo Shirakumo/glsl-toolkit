@@ -118,7 +118,7 @@
                 (nreverse (getf parts :around)))))))
 
 (defun combine-methods (shaders)
-  (let ((shaders (mapcar #'ensure-shader (enlist shaders)))
+  (let ((shaders (mapcar #'copy-tree (mapcar #'ensure-shader (enlist shaders))))
         (env (make-hash-table :test 'equal))
         (other-forms ()))
     ;; TODO: handle overloading
@@ -139,7 +139,7 @@
       `(shader
         ,@other-forms
         ;; Emit declarations first to handle the reordering of function definitions
-        ,@(loop for proto in prototypes
+        ,@(loop for proto in (reverse prototypes)
                 collect `(function-declaration ,proto))
         ,@(loop for definitions being the hash-values of env using (hash-key identifier)
                 append (resolve-method-definitions identifier definitions))))))
