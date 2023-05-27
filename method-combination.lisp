@@ -58,12 +58,12 @@
       (flet ((uniquify (comb defs)
                (loop for i from 1
                      for def in defs
-                     do (setf (definition-identifier def) (format NIL "_~a__~(~a~)_~d" identifier comb i)))))
+                     do (setf (definition-identifier def) (format NIL "_~a_~(~a~)_~d" identifier comb i)))))
         (loop for (k v) on parts by #'cddr
               do (uniquify k v)
                  (setf (getf parts k) (nreverse v))))
       ;; Resolve next methods
-      (setf (definition-identifier proto) (format NIL "_~a__primary" identifier))
+      (setf (definition-identifier proto) (format NIL "_~a_primary" identifier))
       (labels ((emit-call (identifier args)
                  `(modified-reference ,identifier (call-modifier ,@args)))
                (resolve-next-method (def next)
