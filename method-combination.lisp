@@ -137,7 +137,7 @@
                                    (return (second def)))) 
             do (pushnew (copy-tree proto) prototypes :key #'fourth))
       `(shader
-        ,@other-forms
+        ,@(nreverse other-forms)
         ;; Emit declarations first to handle the reordering of function definitions
         ,@(loop for proto in (reverse prototypes)
                 collect `(function-declaration ,proto))

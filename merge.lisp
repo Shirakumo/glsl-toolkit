@@ -115,8 +115,8 @@
                                 ;; We /probably/ already have this declaration.
                                 NIL)
                                (T
-                                (warn "Found two mismatched declarations with the same identifier:~%  ~a~%  ~a"
-                                      (serialize `(variable-declaration ,@matching) NIL)
+                                (error "Found two mismatched declarations with the same identifier:~%  ~a~%  ~a"
+                                      (ignore-errors (serialize `(variable-declaration ,@matching) NIL))
                                       (serialize ast NIL))
                                 (store-identifier identifier)
                                 ast))))
