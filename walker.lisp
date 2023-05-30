@@ -285,7 +285,7 @@
   (progn (setf (binding identifier env)
                (list :variable qualifier specifier array))
          (walk identifier))
-  array (when init (list init)))
+  array (when init (list (walk init))))
 
 (define-walking-body layout-qualifier (&rest ids)
   (mapcar #'walk ids))
