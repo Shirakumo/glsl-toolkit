@@ -72,7 +72,7 @@
                                (declare (ignore ctx env))
                                (cond ((and (consp ast)
                                            (eql 'modified-reference (first ast))
-                                           (string= "call_next_method" (second ast)))
+                                           (equal "call_next_method" (second ast)))
                                       (if (null (rest (third ast)))
                                           (emit-call next args)
                                           `(modified-reference ,next ,@(cddr ast))))
