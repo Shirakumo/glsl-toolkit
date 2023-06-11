@@ -76,6 +76,15 @@
                                       (if (null (rest (third ast)))
                                           (emit-call next args)
                                           `(modified-reference ,next ,@(cddr ast))))
+                                     ((and (consp ast)
+                                           (eql 'modified-reference (first ast))
+                                           (equal "maybe_call_next_method" (second ast)))
+                                      (cond ((not next)
+                                             NIL)
+                                            ((null (rest (third ast)))
+                                             (emit-call next args))
+                                            (T
+                                             `(modified-reference ,next ,@(cddr ast)))))
                                      ((equal ast "next_method_p")
                                       (if next 1 0))
                                      (T

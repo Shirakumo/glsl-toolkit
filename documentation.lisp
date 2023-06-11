@@ -168,7 +168,9 @@ Within any primary or around method body, the variable next_method_p
 is statically replaced with 1 or 0 depending on whether a next method
 is available or not, and a call to call_next_method is replaced with a
 call to the next method function. If no arguments are passed to
-call_next_method, the arguments are copied automatically.
+call_next_method, the arguments are copied automatically. You can also
+make use of maybe_call_next_method, which is semantically the same as
+if(next_method_p) call_next_method(...);
 
 If methods are defined without a single corresponding primary method,
 an error is signalled.
