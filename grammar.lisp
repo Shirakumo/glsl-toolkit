@@ -31,7 +31,7 @@
 (define-object float-token
       (and (or (and (+ (v (any "0123456789"))) (v #\.) (* (v (any "0123456789"))))
                (and (* (v (any "0123456789"))) (v #\.) (+ (v (any "0123456789")))))
-           (? (when (any "eE") (v (any "+-")) (* (v (any "0123456789")))))
+           (? (when (v (any "eE")) (v (any "+-")) (* (v (any "0123456789")))))
            (v (? (or "f" "F" "lf" "LF") "f")))
   (let ((type (if (string-equal "f" (car (last v)))
                   'single-float 'double-float)))
