@@ -86,7 +86,7 @@
                                             (T
                                              `(modified-reference ,next ,@(cddr ast)))))
                                      ((equal ast "next_method_p")
-                                      (if next 1 0))
+                                      (if next :true :false))
                                      (T
                                       ast)))))))
         (loop for cons on (getf parts :around)
