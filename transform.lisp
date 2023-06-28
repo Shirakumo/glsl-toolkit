@@ -14,7 +14,7 @@
   (let ((shader (etypecase source
                   ((or string pathname) (parse source))
                   (cons source)))
-        (accumulator '(glsl-toolkit:shader))
+        (accumulator (list 'shader))
         (parts ())
         (section :global))
     (flet ((finish-section ()
