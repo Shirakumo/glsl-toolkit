@@ -162,7 +162,10 @@ next-method-p.
 
 Any standard function definition is assumed to be a primary
 method. Before, after, and around methods can be defined by suffixing
-the name with @before/@after/@around, respectively.
+the name with @before/@after/@around, respectively. Note that aside
+from the suffix the function signatures (including qualifiers, return
+type, and argument types, but not argument names) have to match
+exactly, as otherwise the functions are considered separate units.
 
 Within any primary or around method body, the variable next_method_p
 is statically replaced with 1 or 0 depending on whether a next method

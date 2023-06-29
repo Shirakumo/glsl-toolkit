@@ -6,6 +6,16 @@
 
 (in-package #:org.shirakumo.trial.glsl)
 
+(defun definition-signature (def)
+  (ecase (first def)
+    (function-prototype
+     (list (fourth def)
+           (second def)
+           (third def)
+           (mapcar #'butlast (nthcdr 4 def))))
+    ((function-declaration function-definition)
+     (definition-signature (second def)))))
+
 (defun definition-identifier (def)
   (ecase (first def)
     (function-prototype
@@ -41,9 +51,9 @@
                               ((string= comb "primary") :primary)
                               (T (error "Unsupported method combination type: ~a" comb)))))
              (setf (fourth (second ast)) name)
-             (push (cons comb ast) (gethash name env))))
+             (push (cons comb ast) (gethash (definition-signature ast) env))))
           (T
-           (push (cons :primary ast) (gethash identifier env))))))
+           (push (cons :primary ast) (gethash (definition-signature ast) env))))))
 
 (defun resolve-method-definitions (identifier definitions)
   (let ((parts (list :before () :after () :primary () :around ()))
@@ -130,7 +140,6 @@
   (let ((shaders (mapcar #'copy-tree (mapcar #'ensure-shader (enlist shaders))))
         (env (make-hash-table :test 'equal))
         (other-forms ()))
-    ;; TODO: handle overloading
     (dolist (shader shaders)
       (loop for ast in (rest shader)
             do (case (first ast)
@@ -151,4 +160,4 @@
         ,@(loop for proto in (reverse prototypes)
                 collect `(function-declaration ,proto))
         ,@(loop for definitions being the hash-values of env using (hash-key identifier)
-                append (resolve-method-definitions identifier definitions))))))
+                append (resolve-method-definitions (definition-identifier (cdr (first definitions))) definitions))))))
