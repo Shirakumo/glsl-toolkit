@@ -61,7 +61,7 @@
          (cond ((string= ident "main")
                 (push (setf (gethash ident global-env) (uniquify global-env ident))
                       (gethash 'main global-env)))
-               (T
+               (T ;; FIXME: handle overloaded functions
                 (store-identifier ident))))
        ast)
       (struct-declaration
