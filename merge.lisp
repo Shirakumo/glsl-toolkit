@@ -150,24 +150,28 @@
 (defun merge-shaders (shaders &key (min-version "120") profile)
   (let ((*unique-counter* 0)
         (global-env (make-hash-table :test 'equal))
-        (version min-version))
+        (version min-version)
+        (extensions ()))
     (flet ((walker (ast context environment)
              (cond ((declaration-p ast environment)
                     (handle-declaration ast context environment global-env))
                    ((stringp ast)
                     (handle-identifier ast context environment global-env))
                    ((preprocessor-p ast environment)
-                    (if (starts-with "#version" (second ast))
-                        (cl-ppcre:register-groups-bind (v NIL p) ("#version (\\d{3})( (.*))?" (second ast))
-                          (when (or (null version) (< (parse-integer version) (parse-integer v)))
-                            (setf version v))
-                          (when p
-                            (when (and profile (string/= profile p))
-                              (warn "Incompatible OpenGL profiles requested: ~a and ~a."
-                                    profile p))
-                            (setf profile p))
-                          NIL)
-                        ast))
+                    (cond ((starts-with "#version" (second ast))
+                           (cl-ppcre:register-groups-bind (v NIL p) ("#version (\\d{3})( (.*))?" (second ast))
+                             (when (or (null version) (< (parse-integer version) (parse-integer v)))
+                               (setf version v))
+                             (when p
+                               (when (and profile (string/= profile p))
+                                 (warn "Incompatible OpenGL profiles requested: ~a and ~a."
+                                       profile p))
+                               (setf profile p))
+                             NIL))
+                          ((starts-with "#extension" (second ast))
+                           (push ast extensions)
+                           NIL)
+                          (T ast)))
                    (T
                     ast))))
       (let ((results (loop for shader in shaders
@@ -176,6 +180,7 @@
                 (when version
                   `((preprocessor-directive
                      ,(format NIL "#version ~a~@[ ~a~]" version profile))))
+                (nreverse extensions)
                 results
                 `((function-definition
                    (function-prototype
