@@ -70,12 +70,12 @@
 
 (defun consume-whitespace ()
   (loop until (end-of-tokens-p)
-        for char = (peek)
-        do (if (or (char= char #\Space)
-                   (char= char #\Linefeed)
-                   (char= char #\Return))
-               (advance)
-               (return))))
+        do (let ((char (peek)))
+             (if (or (char= char #\Space)
+                     (char= char #\Linefeed)
+                     (char= char #\Return))
+                 (advance)
+                 (return)))))
 
 (defun consume-string (string)
   (let ((start *token-index*))
