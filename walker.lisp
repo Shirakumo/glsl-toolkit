@@ -128,6 +128,24 @@
     (and binding
          (eql :function (first binding)))))
 
+(defun overload-p (prototype environment)
+  (destructuring-bind (qualifier specifier identifier &rest parameters) prototype
+    (declare (ignore qualifier))
+    (when (eql :function (car (binding identifier environment)))
+      (loop for binding on (binding identifier environment) by #'cddddr
+            always (destructuring-bind (ex-qualifier ex-specifier ex-parameters) (rest binding)
+                     (declare (ignore ex-qualifier))
+                     ;; It's an overload if:
+                     ;; 1. We have a different return type, or
+                     ;; 2. We have a different number of arguments, or
+                     ;; 3. The arguments have different type specifiers
+                     (or (not (equal ex-specifier specifier))
+                         (not (= (length parameters) (length ex-parameters)))
+                         (loop for param in parameters
+                               for ex-param in ex-parameters
+                               thereis (or (not (equal (second param) (second ex-param)))
+                                           (not (equal (fourth param) (fourth ex-param)))))))))))
+
 (defun walk (ast function &optional (environment (make-environment)))
   (walk-part ast ast function environment))
 
@@ -261,11 +279,15 @@
   (walk prototype)
   NIL)
 
-(define-walking-body (function-prototype :env env) (qualifier specifier identifier &rest parameters)
+(define-walking-body (function-prototype :ast ast :env env) (qualifier specifier identifier &rest parameters)
   qualifier
   specifier
-  (progn (setf (binding identifier env)
-               (list :function qualifier specifier parameters))
+  (progn (let ((binding (list :function qualifier specifier parameters))
+               (existing (binding identifier env)))
+           (cond ((null existing)
+                  (setf (binding identifier env) binding))
+                 ((overload-p ast env)
+                  (setf (binding identifier env) (append binding existing)))))
          (walk identifier))
   parameters)
 
