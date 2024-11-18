@@ -2,7 +2,8 @@
 
 (defclass environment ()
   ((root :initform NIL :reader root)
-   (bindings :initform (make-hash-table :test 'equal) :reader bindings)))
+   (bindings :initform (make-hash-table :test 'equal) :reader bindings)
+   (typedefs :initform (make-hash-table :test 'equal) :reader typedefs)))
 
 ;; FIXME: all this stuff could as well be generic
 (defun binding (name environment)
@@ -11,13 +12,20 @@
 (defun (setf binding) (value name environment)
   (setf (gethash name (bindings environment)) value))
 
+(defun typedef (name environment)
+  (gethash name (typedefs environment)))
+
+(defun (setf typedef) (value name environment)
+  (setf (gethash name (typedefs environment)) value))
+
 (defun make-environment (&optional parent)
   (let ((environment (make-instance 'environment)))
     (cond (parent
            (setf (slot-value environment 'root) (root parent))
-           (loop for k being the hash-keys of (bindings parent)
-                 for v being the hash-values of (bindings parent)
-                 do (setf (binding k environment) v)))
+           (loop for k being the hash-keys of (bindings parent) using (hash-value v)
+                 do (setf (binding k environment) v))
+           (loop for k being the hash-keys of (typedefs parent) using (hash-value v)
+                 do (setf (typedef k environment) v)))
           (T
            (setf (slot-value environment 'root) environment)
            ;; FIXME: inject standard function and variable defs
@@ -83,6 +91,32 @@
                                  same-+
                                  modified-reference)))))
 
+(defun boolean-expression-p (value environment)
+  (declare (ignore environment))
+  (if (consp value)
+      (find (first value) '(logical-or
+                            logical-and
+                            logical-xor
+                            not-equal
+                            equal
+                            less-than
+                            less-equal-than
+                            greater-than
+                            greater-equal-than))
+      (or (eql :true value) (eql :false value))))
+
+(defun numeric-expression-p (value environment)
+  (declare (ignore environment))
+  (if (consp value)
+      (find (first value) '(right-shift
+                            left-shift
+                            subtraction
+                            addition
+                            multiplication
+                            division
+                            modulus))
+      (numberp value)))
+
 (defun control-flow-p (value environment)
   (declare (ignore environment))
   (and (consp value)
@@ -107,6 +141,12 @@
       (control-flow-p value environment)
       (eql value :\;)))
 
+(defun function-call-p (value environment)
+  (declare (ignore environment))
+  (and (consp value)
+       (eql (first value) 'modified-reference)
+       (member 'call-modifier (cddr value) :key #'car)))
+
 (defun identifier-p (value environment)
   (declare (ignore environment))
   (or (keywordp value) (stringp value)))
@@ -127,6 +167,40 @@
   (let ((binding (binding value environment)))
     (and binding
          (eql :function (first binding)))))
+
+(defun variable-type (value environment)
+  (third (binding value environment)))
+
+(defun upgraded-type (a b)
+  ;; NOTE: not sure this is entirely right for, say VEC+DOUBLE? Should it result in DVEC?
+  (or (dolist (type '(:dmat :dvec :mat :vec :imat :ivec :umat :uvec :double :float :int))
+        (cond ((string= a type :end1 (min (length (string a)) (length (string type))))
+               (return a))
+              ((string= b type :end1 (min (length (string b)) (length (string type))))
+               (return b))))
+      a))
+
+(defun derive-expression-type (value environment)
+  (etypecase value
+    (integer :int)
+    (single-float :float)
+    (double-float :double)
+    (string (variable-type value environment))
+    (cons (cond ((boolean-expression-p value environment)
+                 :boolean)
+                ((numeric-expression-p value environment)
+                 (upgraded-type (expression-type (second value) environment)
+                                (expression-type (third value) environment)))
+                ((eql 'modified-reference (first value))
+                 (let ((type (if (eql 'call-modifier (car (third value)))
+                                 (error "FIXME: Derive call return type.")
+                                 (derive-expression-type (second value) environment))))
+                   (dolist (modifier (cddr value) type)
+                     (case (car modifier)
+                       (field-modifier
+                        (setf type (error "FIXME: Derive field type.")))
+                       (array-modifier
+                        (setf type (car type)))))))))))
 
 (defun overload-p (prototype environment)
   (destructuring-bind (qualifier specifier identifier &rest parameters) prototype
