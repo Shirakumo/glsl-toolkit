@@ -55,7 +55,8 @@
     (loop for (comb . ast) in definitions
           do (push ast (getf parts comb)))
     (unless (getf parts :primary)
-      (error "No primary method for ~a" identifier))
+      (warn "No primary method for ~a, ignoring all methods." identifier)
+      (return-from resolve-method-definitions ()))
     (let* ((proto (copy-tree (second (first (getf parts :primary)))))
            (return-type (third proto)))
       ;; Turn into unique function names
