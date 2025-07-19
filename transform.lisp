@@ -34,6 +34,12 @@
                                    (rest include)
                                    include))
                    (push form accumulator))))
+              ((and (eql 'preprocessor-directive (first form))
+                    (starts-with "#eval " (second form)))
+               (let ((form (eval (read-from-string (subseq (second form) (length "#eval "))))))
+                 (etypecase form
+                   (string (push (parse form) accumulator))
+                   (list (push form accumulator)))))
               (T
                (push form accumulator))))
       (finish-section))
