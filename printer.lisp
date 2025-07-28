@@ -327,5 +327,7 @@
           (T
            (indent)
            (serialize-part item)
-           (unless (eql 'function-definition (first item))
+           (unless (or (eql 'function-definition (first item))
+                       (eql 'shader (first item))
+                       (equal item '(interface-declaration no-value nil nil)))
              (sformat ";"))))))
