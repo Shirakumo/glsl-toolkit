@@ -124,6 +124,8 @@
                          `((return ,return-variable)))))
                   (getf parts :primary))))
         (cond ((getf parts :around)
+               (unless (or (getf parts :before) (getf parts :after))
+                 (setf (definition-identifier (first (getf parts :primary))) (format NIL "_~a_primary" identifier)))
                (setf (definition-identifier (first (getf parts :around))) identifier))
               (T
                (setf (definition-identifier (first (getf parts :primary))) identifier)))
