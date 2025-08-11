@@ -14,7 +14,7 @@ This will lex and parse the source into an AST. You can then turn the AST back i
 
     (glsl-toolkit:serialize *)
 
-The library will take certain liberties at transforming the code while parsing and printing. This is done to normalise the code and make it easier to walk and change. The semantic meaning of the code should however be preserved verbatim. If this is not the case, please [file an issue](https://github.com/Shirakumo/glsl-toolkit/issues).
+The library will take certain liberties at transforming the code while parsing and printing. This is done to normalise the code and make it easier to walk and change. The semantic meaning of the code should however be preserved verbatim. If this is not the case, please [file an issue](https://shirakumo.org/project/glsl-toolkit/issues).
 
 Aside from simply printing the source out again, you can also walk over it and transform it in a syntactically and semantically useful way. This way you can refactor the code. A simple example is in order.
 

@@ -4,9 +4,9 @@
   :author "Yukari Hafner <shinmera@tymoon.eu>"
   :maintainer "Yukari Hafner <shinmera@tymoon.eu>"
   :description "A library to parse and modify OpenGL Shader Language (GLSL) source code"
-  :homepage "https://Shirakumo.github.io/glsl-toolkit/"
-  :bug-tracker "https://github.com/Shirakumo/glsl-toolkit/issues"
-  :source-control (:git "https://github.com/Shirakumo/glsl-toolkit.git")
+  :homepage "https://shirakumo.org/docs/glsl-toolkit/"
+  :bug-tracker "https://shirakumo.org/project/glsl-toolkit/issues"
+  :source-control (:git "https://shirakumo.org/project/glsl-toolkit.git")
   :serial T
   :components ((:file "package")
                (:file "toolkit")
